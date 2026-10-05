@@ -1,0 +1,14 @@
+# Arquivos de texto sempre com LF no índice e na working tree,
+# independentemente do core.autocrlf de cada máquina.
+* text=auto eol=lf
+
+# Binários: sem conversão de fim de linha e sem diff textual.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

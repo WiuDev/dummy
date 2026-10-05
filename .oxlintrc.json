@@ -1,8 +1,490 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
+  "plugins": ["react", "typescript", "oxc", "jsx-a11y", "import"],
+  "categories": {
+    "correctness": "error"
+  },
+  "options": {
+    "typeAware": true,
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error"
+  },
   "rules": {
+    "typescript/no-explicit-any": "error",
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+    "react/exhaustive-deps": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-return": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/await-thenable": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    "typescript/restrict-template-expressions": "error",
+    "typescript/only-throw-error": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/consistent-type-imports": "error",
+    "react/jsx-key": "error",
+    "react/only-export-components": ["error", { "allowConstantExport": true }],
+    "react/immutability": "error",
+    "react/set-state-in-effect": "error",
+    "react/set-state-in-render": "error",
+    "react/refs": "error",
+    "react/purity": "error",
+    "react/globals": "error",
+    "react/static-components": "error",
+    "react/use-memo": "error",
+    "react/preserve-manual-memoization": "error",
+    "react/error-boundaries": "error",
+    "react/no-array-index-key": "warn",
+    "import/no-cycle": "error",
+    "no-console": ["warn", { "allow": ["error"] }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "regex": "^axios(/|$)",
+            "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+          },
+          {
+            "regex": "^@/test(/|$)",
+            "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+          },
+          {
+            "regex": "^@/features/[^/]+/",
+            "message": "Importe outra feature apenas pela API pública: @/features/<nome>."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/app/**"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^@/features/[^/]+/",
+                "message": "Importe outra feature apenas pela API pública: @/features/<nome>."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/layouts/**", "src/routes/**"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^@/features/[^/]+/",
+                "message": "Importe outra feature apenas pela API pública: @/features/<nome>."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              },
+              {
+                "regex": "^@/app(/|$)",
+                "message": "layouts e routes não importam src/app (a composição fica no topo)."
+              },
+              {
+                "regex": "^@/services(/|$)",
+                "message": "Componentes, páginas, layouts e rotas não acessam services: use um hook de domínio."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/**"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes)(/|$)",
+                "message": "Camadas internas não importam app, layouts nem routes."
+              },
+              {
+                "regex": "^@/features(/|$)",
+                "message": "components não depende de features: receba os dados por props."
+              },
+              {
+                "regex": "^@/services(/|$)",
+                "message": "Componentes, páginas, layouts e rotas não acessam services: use um hook de domínio."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/hooks/**"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes)(/|$)",
+                "message": "Camadas internas não importam app, layouts nem routes."
+              },
+              {
+                "regex": "^@/features(/|$)",
+                "message": "hooks genéricos não dependem de features."
+              },
+              {
+                "regex": "^@/(components|services)(/|$)",
+                "message": "hooks genéricos não dependem de components nem de services (sem HTTP)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/services/**"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes)(/|$)",
+                "message": "Camadas internas não importam app, layouts nem routes."
+              },
+              {
+                "regex": "^@/features(/|$)",
+                "message": "services não depende de features."
+              },
+              {
+                "regex": "^@/(components|hooks)(/|$)",
+                "message": "services não depende de components nem de hooks."
+              },
+              {
+                "regex": "^(react|react-dom|react-router)(/|$)",
+                "message": "Camada de TypeScript puro: sem React nem bibliotecas de UI."
+              },
+              {
+                "regex": "^@(mantine|tabler)/",
+                "message": "Camada de TypeScript puro: sem React nem bibliotecas de UI."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/schemas/**"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes|features|components|hooks|services|lib)(/|$)",
+                "message": "schemas só depende de zod e de outros schemas."
+              },
+              {
+                "regex": "^(react|react-dom|react-router)(/|$)",
+                "message": "Camada de TypeScript puro: sem React nem bibliotecas de UI."
+              },
+              {
+                "regex": "^@(mantine|tabler)/",
+                "message": "Camada de TypeScript puro: sem React nem bibliotecas de UI."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/**"],
+      "excludeFiles": [
+        "src/**/*.test.ts",
+        "src/**/*.test.tsx",
+        "src/lib/forms/zodResolver.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes|features|components|hooks|services)(/|$)",
+                "message": "lib só depende de zod, de schemas e de outros módulos de lib."
+              },
+              {
+                "regex": "^(react|react-dom|react-router)(/|$)",
+                "message": "Camada de TypeScript puro: sem React nem bibliotecas de UI."
+              },
+              {
+                "regex": "^@(mantine|tabler)/",
+                "message": "Camada de TypeScript puro: sem React nem bibliotecas de UI."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/forms/zodResolver.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "Fora da pasta atual, importe pelo alias @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes|features|components|hooks|services)(/|$)",
+                "message": "lib só depende de zod, de schemas e de outros módulos de lib."
+              },
+              {
+                "regex": "^(react|react-dom|react-router)(/|$)",
+                "message": "Camada de TypeScript puro: sem React nem bibliotecas de UI."
+              },
+              {
+                "group": ["@mantine/*", "!@mantine/form", "@tabler/*"],
+                "message": "Exceção A2: este arquivo só pode importar @mantine/form."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/**"],
+      "excludeFiles": [
+        "src/**/*.test.ts",
+        "src/**/*.test.tsx",
+        "src/features/*/hooks/**",
+        "src/features/*/context/**",
+        "src/features/*/*.ts",
+        "src/features/*/*.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^@/features/[^/]+/",
+                "message": "Importe outra feature apenas pela API pública: @/features/<nome>."
+              },
+              {
+                "regex": "^\\.\\./\\.\\.(/|$)",
+                "message": "Dentro de uma feature, suba no máximo um nível (../); para o resto, use @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes)(/|$)",
+                "message": "Camadas internas não importam app, layouts nem routes."
+              },
+              {
+                "regex": "^@/services(/|$)",
+                "message": "Componentes, páginas, layouts e rotas não acessam services: use um hook de domínio."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/*/hooks/**", "src/features/*/context/**"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^@/features/[^/]+/",
+                "message": "Importe outra feature apenas pela API pública: @/features/<nome>."
+              },
+              {
+                "regex": "^\\.\\./\\.\\.(/|$)",
+                "message": "Dentro de uma feature, suba no máximo um nível (../); para o resto, use @/."
+              },
+              {
+                "regex": "^@/(app|layouts|routes)(/|$)",
+                "message": "Camadas internas não importam app, layouts nem routes."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/*/*.ts", "src/features/*/*.tsx"],
+      "excludeFiles": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "axios só pode ser importado na camada src/services; use a instância de src/services/api.ts."
+              },
+              {
+                "regex": "^@/test(/|$)",
+                "message": "Utilitários de src/test só podem ser importados por arquivos de teste."
+              },
+              {
+                "regex": "^\\.\\.(/|$)",
+                "message": "O index.ts da feature só reexporta módulos da própria feature (./)."
+              },
+              {
+                "regex": "^@/(app|layouts|routes|features|services)(/|$)",
+                "message": "O index.ts da feature só reexporta módulos da própria feature (./)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/**"],
+      "plugins": ["react", "typescript", "oxc", "jsx-a11y", "import", "vitest"],
+      "rules": {
+        "vitest/no-focused-tests": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^axios(/|$)",
+                "message": "Nos testes, simule HTTP com MSW em vez de importar axios."
+              },
+              {
+                "regex": "^@/features/[^/]+/",
+                "message": "Importe outra feature apenas pela API pública: @/features/<nome>."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
