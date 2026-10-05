@@ -201,10 +201,10 @@
   dependencies:
     csstype "^3.2.2"
 
-"@vitejs/plugin-react@^6.1.1":
-  version "6.1.2"
-  resolved "https://registry.yarnpkg.com/@vitejs/plugin-react/-/plugin-react-6.1.2.tgz#924d47e890a78cdf2b72f3f41fe8ab98e089b81e"
-  integrity sha512-fhJNGUdscQa4HkI0xFxwonWyhnVReCPDbXI7FH7jmzpnVCrFQI7PRrhWecO263610vOrs9tr2Y4xcf8uAdFxbw==
+"@vitejs/plugin-react@6.1.1":
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/@vitejs/plugin-react/-/plugin-react-6.1.1.tgz#47fa1a2f956e88eaf778ebf65ddce8e2b36597e7"
+  integrity sha512-yxLaQV9gkhS8ezJqCM6+ndU7mDY6gqAg75NQ+0IjwEI8IYOmQCgkRwHKVSfWXW076DsqMo0Dk+0FK1U+M5RgFw==
   dependencies:
     "@rolldown/pluginutils" "^1.0.1"
 
@@ -363,7 +363,7 @@ react@^19.2.8:
   resolved "https://registry.yarnpkg.com/react/-/react-19.3.0.tgz#e20aa3a14687075ce863351b5878b0608c3fbfb2"
   integrity sha512-E8LUcbtBWt20bbl2YoHfx4ZDBdxVTfOKtCZn9cDSJ4l6/nuoApcpIBcj47t2wZoVX8g2ZHuMHbiShgCR1T5Sog==
 
-rolldown@~1.2.11:
+rolldown@~1.2.9:
   version "1.2.12"
   resolved "https://registry.yarnpkg.com/rolldown/-/rolldown-1.2.12.tgz#75215a6b55a2a9e8f577ac937a4fe42d9682ae0c"
   integrity sha512-8wafseiaG80xmXSfqidUNqZcylTlhmPZZt+za2m+js2sFZ8dTNlhIOV2WcbIPx2hgwPBJpEUGFAMZ9bgBBLTSQ==
@@ -415,15 +415,15 @@ undici-types@~6.21.0:
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.21.0.tgz#691d00af3909be93a7faa13be61b3a5b50ef12cb"
   integrity sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==
 
-vite@^8.3.0:
-  version "8.3.2"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-8.3.2.tgz#391d1e62761b343435b8e4b512e449a4f90670a3"
-  integrity sha512-SQr1x6W5vVSbROg7vsyXIaxK9b0G7zsT68acdWWRmnBUsgDieLCRG+Rep9WdZgcposvv/GSnr4GUUBqB3vXq6w==
+vite@8.3.1:
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-8.3.1.tgz#aa1099a4ccaf104a8c32492951497fa1781d9fce"
+  integrity sha512-/bvH9E9tmCXRGp2uXY3WbOldqpTwFkbha/8ANaEQ6VkxhH60KyqLwgZq6lG2y+4uT55x9+9eUHMpQ7uGnOCKjA==
   dependencies:
     lightningcss "^1.33.0"
     picomatch "^4.0.7"
     postcss "^8.5.28"
-    rolldown "~1.2.11"
+    rolldown "~1.2.9"
     tinyglobby "^0.2.17"
   optionalDependencies:
     fsevents "~2.3.3"
