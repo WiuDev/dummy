@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Só GitHub Actions (D12). O Dependabot atualiza o SHA e o comentário de versão.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Mesma janela da política A1: versões com menos de 7 dias são ignoradas.
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+    commit-message:
+      prefix: ci
+      include: scope
