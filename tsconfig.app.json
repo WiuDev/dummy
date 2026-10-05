@@ -8,7 +8,7 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 
-    /* Bundler mode */
+    /* Modo bundler */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -16,7 +16,20 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
+    /* Alias de import (sem baseUrl, que o TS 7/tsgolint não aceita) */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    /* Tipagem estrita */
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Lint do compilador */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
