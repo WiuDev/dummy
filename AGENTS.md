@@ -15,20 +15,22 @@ Referência persistente para quem trabalha neste repositório, seja pessoa ou ag
 - **Nenhum código sem plano aprovado.** Implemente só a fase aprovada, sem antecipar dependências ou arquivos de outras fases.
 - Se algo divergir do plano (ferramenta que falha, versão incompatível, regra que não fecha), pare e reporte as opções. Não troque ferramenta nem arquitetura por conta própria.
 - Não faça push nem abra PR sem autorização explícita da etapa.
-- Não crie, altere nem dependa de arquivos fora do repositório.
+- Não crie, altere nem dependa de arquivos fora do repositório. Exceções autorizadas: o cache do Yarn e os navegadores do Playwright no cache padrão do usuário (D17).
 - Fases: 0 Fundação · 1 CI + deploy esqueleto · 2 Núcleo de dados · 3 Layout + catálogo · 4 Carrinho · 5 Autenticação + checkout · 6 Admin · 7 Polimento e entrega.
 
 ## Stack e versões-chave
 
-| Área      | Pacotes                                                                                  | Versões                                   | Situação                              |
-| --------- | ---------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------- |
-| Runtime   | Node.js · Yarn Classic                                                                   | 22.19.0 · 1.22.22                         | `.nvmrc`, `engines`, `packageManager` |
-| Base      | react + react-dom · typescript · vite · @vitejs/plugin-react                             | 19.3.0 · 6.0.3 · 8.3.1 · 6.1.1            | instalados                            |
-| Qualidade | oxlint · oxlint-tsgolint · prettier                                                      | 1.86.0 · 7.0.2003 · 3.9.9                 | instalados                            |
-| UI        | @mantine/core, hooks, form, notifications · @tabler/icons-react · postcss-preset-mantine | 9.6.3 · 3.48.0 · 1.18.0                   | planejados (Fase 1+)                  |
-| Rotas     | react-router (modo declarativo)                                                          | 7.18.4                                    | planejado (Fase 1)                    |
-| Dados     | axios · zod                                                                              | 1.20.0 · 4.6.5                            | planejados (Fase 2)                   |
-| Testes    | vitest + @vitest/coverage-v8 · jsdom · @testing-library/\* · msw · @playwright/test      | 5.0.2 · 29.1.1 · 16.3.3 · 2.15.0 · 1.63.0 | planejados (Fase 1+)                  |
+| Área      | Pacotes                                                                     | Versões                                         | Situação                              |
+| --------- | --------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------- |
+| Runtime   | Node.js · Yarn Classic                                                      | 22.19.0 · 1.22.22                               | `.nvmrc`, `engines`, `packageManager` |
+| Base      | react + react-dom · typescript · vite · @vitejs/plugin-react                | 19.3.0 · 6.0.3 · 8.3.1 · 6.1.1                  | instalados                            |
+| Qualidade | oxlint · oxlint-tsgolint · prettier                                         | 1.86.0 · 7.0.2003 · 3.9.9                       | instalados                            |
+| UI        | @mantine/core · @mantine/hooks                                              | 9.6.3 · 9.6.3                                   | instalados                            |
+| UI        | @mantine/form, notifications · @tabler/icons-react · postcss-preset-mantine | 9.6.3 · 3.48.0 · 1.18.0                         | planejados (D23)                      |
+| Rotas     | react-router (modo declarativo)                                             | 7.18.4                                          | instalado                             |
+| Dados     | axios · zod                                                                 | 1.20.0 · 4.6.5                                  | planejados (Fase 2)                   |
+| Testes    | vitest · jsdom · @testing-library/react, dom, jest-dom · @playwright/test   | 5.0.2 · 29.1.1 · 16.3.3, 10.4.2, 7.0.1 · 1.63.0 | instalados                            |
+| Testes    | @vitest/coverage-v8 · @testing-library/user-event · msw                     | 5.0.2 · 14.6.7 · 2.15.0                         | planejados (D23)                      |
 
 As versões planejadas são alvos: confirme a data de publicação (A1) e o `engines` no momento da instalação.
 
@@ -36,7 +38,7 @@ As versões planejadas são alvos: confirme a data de publicação (A1) e o `eng
 
 - **A1**: não adote versão publicada há menos de 7 dias, exceto correção de segurança. Registre a data de publicação de toda versão instalada. A regra vale para as versões escolhidas (dependências diretas); dependências transitivas com menos de 7 dias são listadas no relatório da fase, sem fixação via `resolutions` (D13).
 - Antes de instalar, confira `yarn info <pacote>@<versão> engines` contra o Node 22.19.0. O Yarn 1 recusa `engines` incompatível em qualquer ponto da árvore, inclusive na raiz.
-- Versões exatas para oxlint, oxlint-tsgolint, prettier, vite e @vitejs/plugin-react; `@types/node` em `~22.19.x`, nunca acima da minor do runtime.
+- Toda dependência direta entra com versão exata (`yarn add --exact`), e o `yarn.lock` resolve exatamente a versão escolhida (D21). A única faixa é `@types/node` em `~22.19.x`, nunca acima da minor do runtime.
 - Todos os pacotes `@mantine/*` sempre na mesma versão.
 - O Yarn 1 não instala peer dependencies: declare-as explicitamente.
 - Toda dependência fora da stack exigida precisa de justificativa no PR e nesta tabela.
@@ -101,9 +103,20 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 | `yarn typecheck`                    | `tsc -b`                                                   |
 | `yarn lint` / `yarn lint:fix`       | Oxlint com type-aware; warnings também falham              |
 | `yarn format` / `yarn format:check` | Prettier                                                   |
-| `yarn verify`                       | lint + format:check + typecheck + build                    |
+| `yarn test` / `yarn test:watch`     | Vitest (jsdom)                                             |
+| `yarn test:e2e`                     | Playwright headless contra `yarn build && yarn preview`    |
+| `yarn verify`                       | lint + format:check + typecheck + test + build + test:e2e  |
 
 Convenção: nenhum script pode ter o nome de um comando interno do Yarn 1 (a lista sai em `yarn help`), porque `yarn <nome>` executaria o comando interno em vez do script.
+
+Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright install chromium` (D17).
+
+## CI/CD
+
+- `ci.yml`: push em qualquer branch, pull request para a `main` e `workflow_call`. Checks exigidos pelo ruleset: **`verify`** e **`e2e`**. Não renomeie esses jobs nem use filtros de caminho, porque um check exigido que não roda trava o merge.
+- `deploy.yml`: push na `main` ou disparo manual. Reusa o CI como portão e roda build → deploy no Pages → smoke `@smoke` em produção.
+- Só actions oficiais (`actions/*`), fixadas por SHA completo com o comentário da versão (D19). Novas versões entram via Dependabot, que respeita 7 dias de espera.
+- Passos sempre separados e nomeados; a instalação é literalmente `yarn install --frozen-lockfile`.
 
 ## Definição de pronto
 
@@ -131,6 +144,14 @@ Convenção: nenhum script pode ter o nome de um comando interno do Yarn 1 (a li
 - **D14**: Os caminhos das rotas ficam centralizados em `src/lib/paths.ts`.
 - **D15**: Fora da pasta atual, importe pelo alias `@/`; assim, imports relativos não contornam as regras de camadas.
 - **D16**: O nome da aplicação é Loja Dummy.
+- **D17**: O Chromium do Playwright (versão completa, que permite depurar com o navegador visível) fica no cache padrão do usuário, via `yarn playwright install chromium`. É uma exceção autorizada, como o cache do Yarn. Local e CI usam o mesmo motor, sem `channel: 'msedge'`; no CI, só o headless shell.
+- **D18**: `yarn verify` = lint → format:check → typecheck → test → build → test:e2e.
+- **D19**: Actions oficiais fixadas por SHA completo com comentário de versão; atualização via Dependabot com cooldown.
+- **D20**: Smoke pós-deploy com Playwright contra https://wiudev.github.io/dummy/, em que o deep link deve responder 404 e renderizar a rota.
+- **D21**: Dependências diretas com versão exata (o lockfile resolve a versão escolhida); `@types/node` segue em `~22.19.x`.
+- **D22**: As versões auditadas são mantidas. Só se troca por correção relevante, com nova auditoria de data e `engines`.
+- **D23**: Coverage, user-event, preset PostCSS do Mantine, notifications e ícones entram nas fases em que forem usados.
+- **D24**: A página temporária "Em construção" fica em `src/routes/` e sai na Fase 3.
 - **A1**: Não adotar versão publicada há menos de 7 dias, exceto correção de segurança, e registrar a data de publicação (escopo em D13).
 - **A2**: `AppError` em `src/lib/errors.ts` (sem axios), `toAppError` em `services` e `HttpErrorNotifier` em `src/app/`. Única exceção de import: zodResolver → `@mantine/form`.
 - **A3**: O carrinho pode usar `useReducer`. O overlay do admin usa `useState` com atualizações funcionais e spread (evidência do requisito 2.1 citada no README).
