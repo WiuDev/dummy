@@ -17,7 +17,7 @@
     "lint:fix": "oxlint --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "yarn lint && yarn format:check && yarn typecheck && yarn build"
+    "verify": "yarn lint && yarn format:check && yarn typecheck && yarn build"
   },
   "dependencies": {
     "react": "^19.2.8",

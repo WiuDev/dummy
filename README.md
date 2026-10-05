@@ -75,9 +75,7 @@ Depois acesse http://localhost:5173/.
 | `yarn typecheck`                    | Checagem de tipos                                     |
 | `yarn lint` / `yarn lint:fix`       | Oxlint com regras type-aware (warnings também falham) |
 | `yarn format` / `yarn format:check` | Prettier                                              |
-| `yarn run check`                    | lint + format:check + typecheck + build               |
-
-> Use `yarn run check`: `yarn check`, sem `run`, é um comando interno do Yarn 1 e não executa o script.
+| `yarn verify`                       | lint + format:check + typecheck + build               |
 
 ## Arquitetura
 

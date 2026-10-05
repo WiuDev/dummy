@@ -34,7 +34,7 @@ As versões planejadas são alvos: confirme a data de publicação (A1) e o `eng
 
 ## Política de versões
 
-- **A1**: não adote versão publicada há menos de 7 dias, exceto correção de segurança. Registre a data de publicação de toda versão instalada. A regra vale para as versões escolhidas (dependências diretas); dependências transitivas com menos de 7 dias são listadas no relatório da fase.
+- **A1**: não adote versão publicada há menos de 7 dias, exceto correção de segurança. Registre a data de publicação de toda versão instalada. A regra vale para as versões escolhidas (dependências diretas); dependências transitivas com menos de 7 dias são listadas no relatório da fase, sem fixação via `resolutions` (D13).
 - Antes de instalar, confira `yarn info <pacote>@<versão> engines` contra o Node 22.19.0. O Yarn 1 recusa `engines` incompatível em qualquer ponto da árvore, inclusive na raiz.
 - Versões exatas para oxlint, oxlint-tsgolint, prettier, vite e @vitejs/plugin-react; `@types/node` em `~22.19.x`, nunca acima da minor do runtime.
 - Todos os pacotes `@mantine/*` sempre na mesma versão.
@@ -101,13 +101,13 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 | `yarn typecheck`                    | `tsc -b`                                                   |
 | `yarn lint` / `yarn lint:fix`       | Oxlint com type-aware; warnings também falham              |
 | `yarn format` / `yarn format:check` | Prettier                                                   |
-| `yarn run check`                    | lint + format:check + typecheck + build                    |
+| `yarn verify`                       | lint + format:check + typecheck + build                    |
 
-> Atenção: `yarn check` (sem `run`) é um comando interno do Yarn 1, que confere o lockfile, e **não** executa o script `check`.
+Convenção: nenhum script pode ter o nome de um comando interno do Yarn 1 (a lista sai em `yarn help`), porque `yarn <nome>` executaria o comando interno em vez do script.
 
 ## Definição de pronto
 
-- `yarn install --frozen-lockfile` e `yarn run check` verdes no Windows e, a partir da Fase 1, no CI em Linux.
+- `yarn install --frozen-lockfile` e `yarn verify` verdes no Windows e, a partir da Fase 1, no CI em Linux.
 - A partir da Fase 1, testes (Vitest e Playwright) verdes e checks obrigatórios do PR aprovados.
 - Nenhum `any`, nenhuma regra de lint desligada sem justificativa e nenhum CRLF (`git ls-files --eol`).
 - README atualizado: checklist com status e evidência de cada item.
@@ -127,7 +127,11 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 - **D10**: O enunciado do curso não é versionado neste repositório.
 - **D11**: Ruleset da `main`: PR obrigatório com 0 aprovações, checks obrigatórios, modo loose, sem bypass.
 - **D12**: Ícones aprovados. Dependabot só para GitHub Actions, com cooldown de 7 dias, na Fase 1. axe e lint de título de PR ficam de fora por ora.
-- **A1**: Não adotar versão publicada há menos de 7 dias, exceto correção de segurança, e registrar a data de publicação.
+- **D13**: A A1 vale para as dependências diretas. Transitivas com menos de 7 dias são listadas no relatório de cada fase, sem fixação via `resolutions`.
+- **D14**: Os caminhos das rotas ficam centralizados em `src/lib/paths.ts`.
+- **D15**: Fora da pasta atual, importe pelo alias `@/`; assim, imports relativos não contornam as regras de camadas.
+- **D16**: O nome da aplicação é Loja Dummy.
+- **A1**: Não adotar versão publicada há menos de 7 dias, exceto correção de segurança, e registrar a data de publicação (escopo em D13).
 - **A2**: `AppError` em `src/lib/errors.ts` (sem axios), `toAppError` em `services` e `HttpErrorNotifier` em `src/app/`. Única exceção de import: zodResolver → `@mantine/form`.
 - **A3**: O carrinho pode usar `useReducer`. O overlay do admin usa `useState` com atualizações funcionais e spread (evidência do requisito 2.1 citada no README).
 - **A4**: O logout limpa o overlay do admin.
