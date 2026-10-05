@@ -11,12 +11,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "preview": "vite preview",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check": "yarn lint && yarn format:check && yarn typecheck && yarn build"
   },
   "dependencies": {
     "react": "^19.2.8",
