@@ -1,10 +1,13 @@
 # Loja Dummy
 
-> **Aplicação no ar:** https://wiudev.github.io/dummy/ (em breve; o deploy entra na Fase 1)
+> **Aplicação no ar:** https://wiudev.github.io/dummy/
+
+[![CI](https://github.com/WiuDev/dummy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/WiuDev/dummy/actions/workflows/ci.yml)
+[![Deploy](https://github.com/WiuDev/dummy/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/WiuDev/dummy/actions/workflows/deploy.yml)
 
 Catálogo e compras em React + TypeScript que consome a API pública [DummyJSON](https://dummyjson.com). Tem uma área pública de navegação e uma área administrativa protegida por login.
 
-> Projeto em desenvolvimento. Fase atual: **0 (Fundação)**, com ferramentas, padrões e documentação.
+> Projeto em desenvolvimento. Fase atual: **1 (CI + deploy esqueleto)**: a aplicação publicada ainda mostra uma página "Em construção".
 
 ## Sumário
 
@@ -63,19 +66,27 @@ yarn install --frozen-lockfile
 yarn dev
 ```
 
-Depois acesse http://localhost:5173/.
+Depois acesse http://localhost:5173/dummy/. A aplicação é servida sob `/dummy/`, o mesmo caminho do GitHub Pages.
+
+Para os testes E2E, instale uma vez o Chromium do Playwright (vai para o cache do usuário, fora do projeto):
+
+```bash
+yarn playwright install chromium
+```
 
 ## Scripts
 
-| Comando                             | O que faz                                             |
-| ----------------------------------- | ----------------------------------------------------- |
-| `yarn dev`                          | Servidor de desenvolvimento                           |
-| `yarn build`                        | Checagem de tipos (`tsc -b`) + build de produção      |
-| `yarn preview`                      | Serve o build em http://localhost:4173/               |
-| `yarn typecheck`                    | Checagem de tipos                                     |
-| `yarn lint` / `yarn lint:fix`       | Oxlint com regras type-aware (warnings também falham) |
-| `yarn format` / `yarn format:check` | Prettier                                              |
-| `yarn verify`                       | lint + format:check + typecheck + build               |
+| Comando                             | O que faz                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------- |
+| `yarn dev`                          | Servidor de desenvolvimento em http://localhost:5173/dummy/               |
+| `yarn build`                        | Checagem de tipos (`tsc -b`) + build de produção (gera também o 404.html) |
+| `yarn preview`                      | Serve o build em http://localhost:4173/dummy/                             |
+| `yarn typecheck`                    | Checagem de tipos                                                         |
+| `yarn lint` / `yarn lint:fix`       | Oxlint com regras type-aware (warnings também falham)                     |
+| `yarn format` / `yarn format:check` | Prettier                                                                  |
+| `yarn test` / `yarn test:watch`     | Testes unitários e de componentes (Vitest)                                |
+| `yarn test:e2e`                     | Testes E2E (Playwright, headless) contra o build de produção              |
+| `yarn verify`                       | lint + format:check + typecheck + testes unitários + build + testes E2E   |
 
 ## Arquitetura
 
@@ -85,9 +96,17 @@ Estado atual:
 
 ```text
 src/
-├─ main.tsx     # ponto de entrada (createRoot + StrictMode)
-└─ app/
-   └─ App.tsx   # composição da aplicação (mínima na Fase 0)
+├─ main.tsx                      # ponto de entrada: StrictMode + BrowserRouter (basename /dummy/)
+├─ app/
+│  ├─ App.tsx                    # MantineProvider + tema + rotas
+│  ├─ AppRoutes.tsx              # rotas declarativas
+│  └─ theme.ts                   # tema do Mantine
+├─ routes/
+│  └─ UnderConstructionPage.tsx  # página temporária (sai na Fase 3)
+└─ test/
+   └─ setup.ts                   # setup do Vitest (jest-dom, polyfills do Mantine)
+e2e/
+└─ smoke.spec.ts                 # smoke do Playwright (também roda em produção)
 ```
 
 ## Decisões e limitações da API
@@ -99,26 +118,31 @@ src/
 
 ## Checklist dos 10 requisitos
 
-| #   | Requisito                                             | Status   | Como foi resolvido |
-| --- | ----------------------------------------------------- | -------- | ------------------ |
-| 1   | Estrutura de componentes e tipagem com TypeScript     | pendente | —                  |
-| 2   | Estado reativo, imutabilidade e ciclo de vida         | pendente | —                  |
-| 3   | Estado global com Context API e Custom Hooks          | pendente | —                  |
-| 4   | Roteamento e layouts com React Router                 | pendente | —                  |
-| 5   | Interface gráfica e formulários com Mantine UI        | pendente | —                  |
-| 6   | Fluxo de autenticação JWT e rotas protegidas          | pendente | —                  |
-| 7   | Consumo de API REST, interceptors e validação com Zod | pendente | —                  |
-| 8   | Testes automatizados com Vitest e RTL                 | pendente | —                  |
-| 9   | Testes ponta a ponta com Playwright                   | pendente | —                  |
-| 10  | Pipeline de CI/CD e deploy em produção                | pendente | —                  |
+| #   | Requisito                                             | Status   | Como foi resolvido                                                                                                                                                                                              |
+| --- | ----------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Estrutura de componentes e tipagem com TypeScript     | parcial  | Projeto criado com Vite (template react-ts) e TypeScript estrito; componentes de domínio a partir da Fase 3.                                                                                                    |
+| 2   | Estado reativo, imutabilidade e ciclo de vida         | pendente | —                                                                                                                                                                                                               |
+| 3   | Estado global com Context API e Custom Hooks          | pendente | —                                                                                                                                                                                                               |
+| 4   | Roteamento e layouts com React Router                 | parcial  | Rotas declarativas (`src/app/AppRoutes.tsx`) com `BrowserRouter` e `basename` (`src/main.tsx`); layouts, `NavLink`, `useNavigate` e `useParams` nas próximas fases.                                             |
+| 5   | Interface gráfica e formulários com Mantine UI        | parcial  | `MantineProvider` com tema (`src/app/App.tsx`, `src/app/theme.ts`); layouts responsivos, formulários e tabelas nas próximas fases.                                                                              |
+| 6   | Fluxo de autenticação JWT e rotas protegidas          | pendente | —                                                                                                                                                                                                               |
+| 7   | Consumo de API REST, interceptors e validação com Zod | pendente | —                                                                                                                                                                                                               |
+| 8   | Testes automatizados com Vitest e RTL                 | parcial  | Vitest + jsdom + React Testing Library + jest-dom configurados (`vitest.config.ts`, `src/test/setup.ts`), com um teste de componente por consulta acessível (`src/app/App.test.tsx`).                           |
+| 9   | Testes ponta a ponta com Playwright                   | parcial  | Playwright headless contra o build de produção (`playwright.config.ts`), com smoke de home, deep link e 404.html (`e2e/smoke.spec.ts`); os fluxos completos vêm com as funcionalidades.                         |
+| 10  | Pipeline de CI/CD e deploy em produção                | parcial  | CI (`.github/workflows/ci.yml`), deploy no GitHub Pages com smoke pós-deploy (`.github/workflows/deploy.yml`), `base` e 404.html (`vite.config.ts`). Falta ativar o ruleset da `main` (configuração no GitHub). |
 
 ## Testes
 
-Em breve, a partir da Fase 1: testes unitários e de componentes com Vitest, React Testing Library e MSW, e testes ponta a ponta com Playwright (headless) contra o build de produção.
+- **Unitários e de componentes:** Vitest 5 com jsdom, React Testing Library e jest-dom. Os testes ficam ao lado do código (`*.test.tsx`) e usam consultas acessíveis (`getByRole`, `getByText`). Rode com `yarn test`.
+- **Ponta a ponta:** Playwright em modo headless contra o build de produção servido em `/dummy/`. O smoke cobre a home, um deep link com recarregamento e o 404.html gerado no build. Rode com `yarn test:e2e`.
+- Depois de cada deploy, o mesmo smoke roda contra o site publicado: lá o deep link responde HTTP 404 (o GitHub Pages serve o 404.html) e a aplicação abre a rota pedida.
 
 ## CI/CD, deploy e proteção da main
 
-Em breve, na Fase 1: workflow de CI (lint, tipos, Vitest e Playwright a cada push e pull request), workflow de deploy no GitHub Pages e regras de proteção da branch `main`.
+- **CI** (`.github/workflows/ci.yml`): a cada push e pull request para a `main`. O job `verify` roda instalação com `yarn install --frozen-lockfile`, lint, formatação, typecheck, testes unitários, build e checagem do 404.html. O job `e2e` roda o Playwright. O Node vem do `.nvmrc`.
+- **Deploy** (`.github/workflows/deploy.yml`): a cada push na `main`, roda o CI completo, faz o build, publica no GitHub Pages e executa o smoke em produção.
+- **Proteção da `main`:** ruleset com pull request obrigatório e os checks `verify` e `e2e` exigidos antes do merge.
+- **Dependabot:** atualiza semanalmente as GitHub Actions (fixadas por SHA), respeitando 7 dias de espera após cada versão.
 
 ## Convenções
 
