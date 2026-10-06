@@ -7,7 +7,7 @@
 
 Catálogo e compras em React + TypeScript que consome a API pública [DummyJSON](https://dummyjson.com). Tem uma área pública de navegação e uma área administrativa protegida por login.
 
-> Projeto em desenvolvimento. Fase atual: **2 (núcleo de dados)**: a camada de dados (HTTP, validação, sessão e hooks) está pronta e testada, mas a aplicação publicada ainda mostra uma página "Em construção".
+> Projeto em desenvolvimento. Fase atual: **3 (layout + catálogo), primeira parte**: o layout público com a navegação, as rotas e os hooks do catálogo estão prontos; as páginas do catálogo chegam na segunda parte, e por ora `/produtos` mostra uma página "Em construção".
 
 ## Sumário
 
@@ -46,7 +46,7 @@ Credenciais de teste da DummyJSON: `emilys` / `emilyspass` (há outras em https:
 
 ## Stack
 
-React 19 · TypeScript 6 (estrito) · Vite 8 · Mantine 9 + CSS Modules · React Router 7 · Axios + Zod · Context API · Vitest + React Testing Library + MSW · Playwright · GitHub Actions + GitHub Pages.
+React 19 · TypeScript 6 (estrito) · Vite 8 · Mantine 9 + CSS Modules (PostCSS com o preset do Mantine) · Tabler Icons · React Router 7 · Axios + Zod · Context API · Vitest + React Testing Library + user-event + MSW · Playwright · GitHub Actions + GitHub Pages.
 
 As versões exatas, a política de versões e as regras do projeto estão em [AGENTS.md](AGENTS.md).
 
@@ -100,22 +100,32 @@ src/
 ├─ main.tsx                      # ponto de entrada: StrictMode + BrowserRouter (basename /dummy/)
 ├─ app/
 │  ├─ App.tsx                    # MantineProvider + tema + notificações + rotas
-│  ├─ AppRoutes.tsx              # rotas declarativas
+│  ├─ AppRoutes.tsx              # rotas declarativas com layout route
 │  ├─ HttpErrorNotifier.tsx      # notifica falhas de rede, tempo esgotado, 5xx e 429
 │  └─ theme.ts                   # tema do Mantine
+├─ components/                   # UI apresentacional: AppNavLink, PageHeader, AsyncContent,
+│                                # EmptyState, ErrorState e Price (+ CSS Modules)
+├─ features/
+│  └─ catalog/hooks/             # useCatalogParams (URL), useProducts, useProduct, useCategories
 ├─ hooks/
 │  ├─ useAsync.ts                # leitura assíncrona cancelável (abort no cleanup)
 │  ├─ useAsyncAction.ts          # mutações com estado explícito
-│  └─ useDebouncedValue.ts       # debounce com setTimeout e clearTimeout
+│  ├─ useDebouncedValue.ts       # debounce com setTimeout e clearTimeout
+│  └─ useDocumentTitle.ts        # título da aba, restaurado no cleanup
+├─ layouts/
+│  └─ PublicLayout.tsx           # AppShell: cabeçalho, navegação, menu mobile e <Outlet />
 ├─ lib/
 │  ├─ errors.ts                  # AppError e mensagens em pt-BR
 │  ├─ events.ts                  # canais de eventos tipados
 │  ├─ storage.ts                 # localStorage versionado e validado com Zod
 │  ├─ jwt.ts                     # leitura do payload do JWT
-│  └─ auth-session.ts            # sessão de autenticação (dummy:auth:v1)
+│  ├─ auth-session.ts            # sessão de autenticação (dummy:auth:v1)
+│  ├─ paths.ts                   # caminhos das rotas
+│  └─ format.ts, pricing.ts      # moeda, percentual e data em pt-BR; preço com desconto
 ├─ routes/
-│  └─ UnderConstructionPage.tsx  # página temporária (sai na Fase 3)
-├─ schemas/                      # schemas Zod do contrato (produtos, auth, carrinho, erro)
+│  ├─ NotFoundPage.tsx           # página não encontrada
+│  └─ UnderConstructionPage.tsx  # página temporária do catálogo (sai no PR 3b)
+├─ schemas/                      # schemas Zod do contrato e dos parâmetros da URL
 ├─ services/
 │  ├─ api.ts                     # instância do Axios e interceptors
 │  ├─ http-error.ts              # toAppError: falha HTTP → AppError
@@ -141,25 +151,25 @@ e2e/
 
 ## Checklist dos 10 requisitos
 
-| #   | Requisito                                             | Status   | Como foi resolvido                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| --- | ----------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Estrutura de componentes e tipagem com TypeScript     | parcial  | Projeto criado com Vite (template react-ts) e TypeScript estrito; componentes de domínio a partir da Fase 3.                                                                                                                                                                                                                                                                                                                                      |
-| 2   | Estado reativo, imutabilidade e ciclo de vida         | parcial  | Hooks com cleanup no ciclo de vida: `useAsync` aborta a requisição com `AbortController` e descarta respostas atrasadas, e `useDebouncedValue` cancela o timer (`src/hooks/`). Estado e imutabilidade nas telas a partir da Fase 3.                                                                                                                                                                                                               |
-| 3   | Estado global com Context API e Custom Hooks          | pendente | —                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 4   | Roteamento e layouts com React Router                 | parcial  | Rotas declarativas (`src/app/AppRoutes.tsx`) com `BrowserRouter` e `basename` (`src/main.tsx`); layouts, `NavLink`, `useNavigate` e `useParams` nas próximas fases.                                                                                                                                                                                                                                                                               |
-| 5   | Interface gráfica e formulários com Mantine UI        | parcial  | `MantineProvider` com tema e notificações (`src/app/App.tsx`, `src/app/theme.ts`); layouts responsivos, formulários e tabelas nas próximas fases.                                                                                                                                                                                                                                                                                                 |
-| 6   | Fluxo de autenticação JWT e rotas protegidas          | parcial  | Sessão salva e validada com Zod, com expiração lida do `exp` do JWT (`src/lib/auth-session.ts`); o interceptor envia o Bearer nas rotas `/auth/*` e trata sessão ausente, sessão expirada e 401 (`src/services/api.ts`). Tela de login e bloqueio de rotas na Fase 5.                                                                                                                                                                             |
-| 7   | Consumo de API REST, interceptors e validação com Zod | parcial  | Instância do Axios com `baseURL`, timeout e interceptors de request (Bearer) e de response (`AppError`), em `src/services/api.ts`; toda resposta validada com Zod (`src/services/parse-response.ts`, `src/schemas/`); falhas de rede, tempo esgotado, 5xx e 429 viram notificação global (`src/app/HttpErrorNotifier.tsx`). Falta a validação dos formulários com Zod (Fases 5 e 6).                                                              |
-| 8   | Testes automatizados com Vitest e RTL                 | parcial  | Vitest + jsdom + React Testing Library + jest-dom, com HTTP simulado pelo MSW (`src/test/msw/`) e `renderWithProviders` (`src/test/render.tsx`); testes de contrato dos schemas com fixtures da API e testes de services, hooks e componentes; cobertura com thresholds (`vitest.config.ts`) no `yarn verify` e no CI.                                                                                                                            |
-| 9   | Testes ponta a ponta com Playwright                   | parcial  | Playwright headless contra o build de produção (`playwright.config.ts`), com smoke de home, deep link e 404.html (`e2e/smoke.spec.ts`); os fluxos completos vêm com as funcionalidades.                                                                                                                                                                                                                                                           |
-| 10  | Pipeline de CI/CD e deploy em produção                | parcial  | CI (`.github/workflows/ci.yml`), deploy no GitHub Pages com smoke pós-deploy que espera a versão publicada (`.github/workflows/deploy.yml`), `base`, 404.html e meta `app-version` (`vite.config.ts`) e validação do título do PR (`.github/workflows/pr-title.yml`). O ruleset da `main` está ativo, com PR obrigatório e os checks `verify` e `e2e`, mas ainda aceita merge commit: falta restringir o merge a squash (configuração no GitHub). |
+| #   | Requisito                                             | Status    | Como foi resolvido                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --- | ----------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Estrutura de componentes e tipagem com TypeScript     | concluído | Projeto criado com Vite (template react-ts) e TypeScript estrito, sem `any`. Componentes com props tipadas (`readonly`) e `children` (`PageHeader`, `EmptyState`, `AppNavLink` e `AsyncContent`, este com children como função) e estilos em CSS Modules com o preset do Mantine (`src/components/`, `src/layouts/`).                                                                                                                                                                                              |
+| 2   | Estado reativo, imutabilidade e ciclo de vida         | parcial   | Hooks com cleanup no ciclo de vida: `useAsync` aborta a requisição com `AbortController` e descarta respostas atrasadas (os hooks do catálogo passam tarefas estáveis), `useDebouncedValue` cancela o timer e `useDocumentTitle` restaura o título da aba (`src/hooks/`, `src/features/catalog/hooks/`). O estado com atualizações imutáveis chega com o carrinho, na Fase 4.                                                                                                                                      |
+| 3   | Estado global com Context API e Custom Hooks          | pendente  | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 4   | Roteamento e layouts com React Router                 | parcial   | `BrowserRouter` com `basename` (`src/main.tsx`) e rotas declarativas com layout route (`src/app/AppRoutes.tsx`): o `PublicLayout` persiste com `<Outlet />` (`src/layouts/PublicLayout.tsx`), `/` redireciona com `<Navigate replace>` e rotas desconhecidas mostram a `NotFoundPage`; o `AppNavLink` usa o `NavLink` e marca a rota ativa com `aria-current`; o estado do catálogo fica na URL com `useSearchParams` (`useCatalogParams`). `useParams` e `useNavigate` chegam com o detalhe do produto, no PR 3b. |
+| 5   | Interface gráfica e formulários com Mantine UI        | parcial   | `MantineProvider` com tema e notificações (`src/app/App.tsx`, `src/app/theme.ts`); `AppShell` responsivo, com `Burger` e `Drawer` no mobile (`src/layouts/PublicLayout.tsx`); `Skeleton` e `LoadingOverlay` via `AsyncContent`. Grade de produtos, paginação, formulários e tabelas nas próximas etapas.                                                                                                                                                                                                           |
+| 6   | Fluxo de autenticação JWT e rotas protegidas          | parcial   | Sessão salva e validada com Zod, com expiração lida do `exp` do JWT (`src/lib/auth-session.ts`); o interceptor envia o Bearer nas rotas `/auth/*` e trata sessão ausente, sessão expirada e 401 (`src/services/api.ts`). Tela de login e bloqueio de rotas na Fase 5.                                                                                                                                                                                                                                              |
+| 7   | Consumo de API REST, interceptors e validação com Zod | parcial   | Instância do Axios com `baseURL`, timeout e interceptors de request (Bearer) e de response (`AppError`), em `src/services/api.ts`; toda resposta validada com Zod (`src/services/parse-response.ts`, `src/schemas/`); falhas de rede, tempo esgotado, 5xx e 429 viram notificação global (`src/app/HttpErrorNotifier.tsx`). Falta a validação dos formulários com Zod (Fases 5 e 6). Os parâmetros da URL também são validados com Zod (`src/schemas/catalog.ts`).                                                 |
+| 8   | Testes automatizados com Vitest e RTL                 | concluído | Vitest + jsdom + React Testing Library + jest-dom + user-event, com HTTP simulado pelo MSW (`src/test/msw/`) e `renderWithProviders` com roteador em memória (`src/test/render.tsx`); consultas por papel e nome; testes de contrato dos schemas e de services, hooks, componentes, layout e rotas; cobertura com thresholds (`vitest.config.ts`) no `yarn verify` e no CI.                                                                                                                                        |
+| 9   | Testes ponta a ponta com Playwright                   | parcial   | Playwright headless contra o build de produção (`playwright.config.ts`), com smoke do layout, do redirecionamento da home, de um deep link com recarregamento, de uma rota desconhecida e do 404.html (`e2e/smoke.spec.ts`); o fluxo do catálogo vem no PR 3b.                                                                                                                                                                                                                                                     |
+| 10  | Pipeline de CI/CD e deploy em produção                | concluído | CI (`.github/workflows/ci.yml`), deploy no GitHub Pages com smoke pós-deploy que espera a versão publicada (`.github/workflows/deploy.yml`), `base`, 404.html e meta `app-version` (`vite.config.ts`) e validação do título do PR (`.github/workflows/pr-title.yml`). Ruleset da `main` (configuração no GitHub): PR obrigatório, checks `verify`, `e2e` e `pr-title`, merge só por squash e exclusão e force push bloqueados.                                                                                     |
 
 ## Testes
 
-- **Unitários e de componentes:** Vitest 5 com jsdom, React Testing Library e jest-dom. Os testes ficam ao lado do código (`*.test.ts(x)`) e usam consultas acessíveis (`getByRole`, `getByText`). Rode com `yarn test`.
+- **Unitários e de componentes:** Vitest 5 com jsdom, React Testing Library e jest-dom. As interações usam user-event. Os testes ficam ao lado do código (`*.test.ts(x)`) e usam consultas acessíveis (`getByRole`, `getByText`). Rode com `yarn test`.
 - **HTTP simulado:** o MSW 2 intercepta as requisições do Axios. Os handlers padrão respondem com fixtures capturadas da API (tokens sintéticos, sem dados sensíveis) e uma requisição sem handler falha o teste. Os schemas têm testes de contrato contra essas fixtures.
 - **Cobertura:** `yarn test:coverage` (v8) com thresholds de 80/80/80/70 (linhas, statements, funções, branches) no geral e 90/90/90/85 em `lib`, `services`, `hooks` e `schemas`. O relatório HTML fica em `coverage/` e o CI o publica como artefato.
-- **Ponta a ponta:** Playwright em modo headless contra o build de produção servido em `/dummy/`. O smoke cobre a home (inclusive a meta `app-version`), um deep link com recarregamento e o 404.html gerado no build. Rode com `yarn test:e2e`.
+- **Ponta a ponta:** Playwright em modo headless contra o build de produção servido em `/dummy/`. O smoke cobre a home, que redireciona para o catálogo (inclusive a meta `app-version`), o cabeçalho com a navegação ativa, um deep link com recarregamento, uma rota desconhecida e o 404.html gerado no build. Rode com `yarn test:e2e`.
 - Depois de cada deploy, o mesmo smoke roda contra o site publicado, assim que a meta `app-version` mostra o commit do deploy (o CDN do Pages guarda o HTML por até 10 minutos). Lá o deep link responde HTTP 404 (o GitHub Pages serve o 404.html) e a aplicação abre a rota pedida.
 
 ## CI/CD, deploy e proteção da main
@@ -167,7 +177,7 @@ e2e/
 - **CI** (`.github/workflows/ci.yml`): a cada push e pull request para a `main`. O job `verify` roda instalação com `yarn install --frozen-lockfile`, lint, formatação, typecheck, testes unitários com cobertura (o relatório vira o artefato `coverage`), build e checagem do 404.html. O job `e2e` roda o Playwright. O Node vem do `.nvmrc`.
 - **Deploy** (`.github/workflows/deploy.yml`): a cada push na `main`, roda o CI completo, faz o build, publica no GitHub Pages, espera a nova versão ficar no ar e executa o smoke em produção.
 - **Título do PR** (`.github/workflows/pr-title.yml`): o job `pr-title` confere se o título do PR, que vira a mensagem do squash, segue o Conventional Commits.
-- **Proteção da `main`:** ruleset com pull request obrigatório e os checks `verify` e `e2e` exigidos antes do merge. O merge ainda aceita merge commit além de squash.
+- **Proteção da `main`:** ruleset com pull request obrigatório, os checks `verify`, `e2e` e `pr-title` exigidos antes do merge, merge só por squash e exclusão e force push bloqueados.
 - **Dependabot:** atualiza semanalmente as GitHub Actions (fixadas por SHA), respeitando 7 dias de espera após cada versão.
 
 ## Convenções

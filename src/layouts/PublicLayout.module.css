@@ -1,0 +1,33 @@
+/* Link para pular a navegação: fica fora da tela até receber o foco. */
+.skipLink {
+  position: absolute;
+  top: rem(8px);
+  left: rem(8px);
+  z-index: 1000;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  font-weight: 600;
+  transform: translateY(-200%);
+
+  &:focus-visible {
+    transform: translateY(0);
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+  }
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  color: var(--mantine-color-text);
+  font-size: var(--mantine-font-size-lg);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* O main recebe o foco do skip link; o contorno fica só nos elementos internos. */
+.main:focus {
+  outline: none;
+}

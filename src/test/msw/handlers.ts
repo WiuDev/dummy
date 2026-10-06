@@ -17,8 +17,32 @@ import searchPhone from '@/test/fixtures/products-search-phone.json'
 // Mesmo valor do baseURL de src/services/api.ts (um teste confere).
 export const API_URL = 'https://dummyjson.com'
 
-// Categoria que não existe: a API responde 200 com a página vazia.
-const EMPTY_PAGE = { products: [], total: 0, skip: 0, limit: 0 }
+interface FixturePage {
+  readonly products: readonly unknown[]
+  readonly total: number
+}
+
+// Busca ou categoria sem fixture: a API responde 200 com a página vazia.
+const EMPTY_PAGE: FixturePage = { products: [], total: 0 }
+
+// Responde como a API: fatia os produtos com limit e skip (o padrão é 30 e
+// limit=0 traz todos) e informa em limit quantos itens vieram.
+function paginate(page: FixturePage, request: Request) {
+  const { searchParams } = new URL(request.url)
+  const limit = Number(searchParams.get('limit') ?? 30)
+  const skip = Number(searchParams.get('skip') ?? 0)
+  const products = page.products.slice(
+    skip,
+    limit === 0 ? undefined : skip + limit,
+  )
+  return { products, total: page.total, skip, limit: products.length }
+}
+
+// Só a busca "phone" tem fixture: as 23 respostas da API real.
+function searchResults(request: Request): FixturePage {
+  const query = new URL(request.url).searchParams.get('q')?.trim()
+  return query?.toLowerCase() === 'phone' ? searchPhone : EMPTY_PAGE
+}
 
 export function hasBearer(request: Request): boolean {
   return request.headers.get('Authorization')?.startsWith('Bearer ') === true
@@ -42,18 +66,24 @@ function productReadHandlers(
   return [
     http.get(
       `${API_URL}${prefix}`,
-      ({ request }) => guard(request) ?? HttpResponse.json(productsPage),
+      ({ request }) =>
+        guard(request) ?? HttpResponse.json(paginate(productsPage, request)),
     ),
     http.get(
       `${API_URL}${prefix}/search`,
-      ({ request }) => guard(request) ?? HttpResponse.json(searchPhone),
+      ({ request }) =>
+        guard(request) ??
+        HttpResponse.json(paginate(searchResults(request), request)),
     ),
     http.get(
       `${API_URL}${prefix}/category/:slug`,
       ({ request, params }) =>
         guard(request) ??
         HttpResponse.json(
-          params['slug'] === 'smartphones' ? smartphones : EMPTY_PAGE,
+          paginate(
+            params['slug'] === 'smartphones' ? smartphones : EMPTY_PAGE,
+            request,
+          ),
         ),
     ),
     http.get(

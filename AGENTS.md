@@ -26,18 +26,20 @@ Referência persistente para quem trabalha neste repositório, seja pessoa ou ag
 | Base      | react + react-dom · typescript · vite · @vitejs/plugin-react              | 19.3.0 · 6.0.3 · 8.3.1 · 6.1.1                  | instalados                            |
 | Qualidade | oxlint · oxlint-tsgolint · prettier                                       | 1.86.0 · 7.0.2003 · 3.9.9                       | instalados                            |
 | UI        | @mantine/core · @mantine/hooks · @mantine/notifications                   | 9.6.3 · 9.6.3 · 9.6.3                           | instalados                            |
-| UI        | @mantine/form · @tabler/icons-react · postcss-preset-mantine              | 9.6.3 · 3.48.0 · 1.18.0                         | planejados (D23)                      |
+| UI        | @tabler/icons-react                                                       | 3.48.0                                          | instalado                             |
+| UI        | @mantine/form                                                             | 9.6.3                                           | planejado (D23)                       |
+| Estilos   | postcss · postcss-preset-mantine · postcss-simple-vars                    | 8.5.29 · 1.18.0 · 7.0.1                         | instalados (D35)                      |
 | Rotas     | react-router (modo declarativo)                                           | 7.18.4                                          | instalado                             |
 | Dados     | axios · zod                                                               | 1.20.0 · 4.6.5                                  | instalados                            |
 | Testes    | vitest · jsdom · @testing-library/react, dom, jest-dom · @playwright/test | 5.0.2 · 29.1.1 · 16.3.3, 10.4.2, 7.0.1 · 1.63.0 | instalados                            |
 | Testes    | @vitest/coverage-v8 · msw                                                 | 5.0.2 · 2.15.0                                  | instalados                            |
-| Testes    | @testing-library/user-event                                               | 14.6.7                                          | planejado (D23)                       |
+| Testes    | @testing-library/user-event                                               | 14.6.7                                          | instalado                             |
 
 As versões planejadas são alvos: confirme a data de publicação (A1) e o `engines` no momento da instalação.
 
 ## Política de versões
 
-- **A1**: não adote versão publicada há menos de 7 dias, exceto correção de segurança. Registre a data de publicação de toda versão instalada. A regra vale para as versões escolhidas (dependências diretas); dependências transitivas com menos de 7 dias são listadas no relatório da fase, sem fixação via `resolutions` (D13).
+- **A1**: não adote versão publicada há menos de 7 dias, exceto correção de segurança. Registre a data de publicação de toda versão instalada. A regra vale para as versões escolhidas (dependências diretas); dependências transitivas com menos de 7 dias são listadas no relatório da fase, sem fixação via `resolutions` (D13). Esclarecimento (D35): uma versão que já está no `yarn.lock` como transitiva pode ser declarada como dependência direta mesmo com menos de 7 dias, porque não introduz código novo; versões que ainda não estão no lockfile continuam sujeitas à regra.
 - Antes de instalar, confira `yarn info <pacote>@<versão> engines` contra o Node 22.19.0. O Yarn 1 recusa `engines` incompatível em qualquer ponto da árvore, inclusive na raiz.
 - Toda dependência direta entra com versão exata (`yarn add --exact`), e o `yarn.lock` resolve exatamente a versão escolhida (D21). A única faixa é `@types/node` em `~22.19.x`, nunca acima da minor do runtime.
 - Todos os pacotes `@mantine/*` sempre na mesma versão.
@@ -95,6 +97,10 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 - Fake timers só onde não há rede (debounce, expiração).
 - O interceptor XHR do MSW não dispara o `timeout` do jsdom enquanto o handler não responde; o tempo esgotado é testado com um adapter de teste que rejeita como o adapter XHR do axios (`code: 'ETIMEDOUT'`).
 - As notificações do Mantine têm estado global: limpe com `notifications.clean()` dentro de `act` depois de cada teste que as exibe.
+- Interações com `@testing-library/user-event` (`userEvent.setup()`) e consultas por papel e nome. Para testar páginas e rotas, `renderWithProviders(<AppRoutes />, { route })` monta o layout e as rotas reais num `MemoryRouter`.
+- As consultas do Testing Library normalizam espaços: o espaço não separável (U+00A0) que o `Intl` põe depois de `US$` vira um espaço comum. Em comparações exatas fora do DOM, use uma constante para o caractere, nunca o caractere literal.
+- No jsdom o CSS do Mantine não é aplicado: `hiddenFrom` e `visibleFrom` não escondem nada nos testes.
+- No Playwright, use `page.goto('produtos')`, sem barra inicial: o `baseURL` termina em `/dummy/`.
 - Cobertura com thresholds (D27): o `yarn verify` e o CI falham se ela cair.
 
 ## Commits e branches
@@ -124,9 +130,9 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 
 ## CI/CD
 
-- `ci.yml`: push em qualquer branch, pull request para a `main` e `workflow_call`. Checks exigidos pelo ruleset: **`verify`** e **`e2e`**. Não renomeie esses jobs nem use filtros de caminho, porque um check exigido que não roda trava o merge. O `verify` roda `yarn test:coverage` e publica o relatório como artefato `coverage`.
+- `ci.yml`: push em qualquer branch, pull request para a `main` e `workflow_call`. Checks exigidos pelo ruleset: **`verify`**, **`e2e`** e **`pr-title`** (este no `pr-title.yml`). Não renomeie esses jobs nem use filtros de caminho, porque um check exigido que não roda trava o merge. O `verify` roda `yarn test:coverage` e publica o relatório como artefato `coverage`.
 - `deploy.yml`: push na `main` ou disparo manual. Reusa o CI como portão e roda build → deploy no Pages → espera a versão publicada (meta `app-version`, D34) → smoke `@smoke` em produção.
-- `pr-title.yml`: o job **`pr-title`** valida o título do PR, que vira a mensagem do squash, no padrão Conventional Commits (D31).
+- `pr-title.yml`: o job **`pr-title`** valida o título do PR, que vira a mensagem do squash, no padrão Conventional Commits (D31). Também é check exigido.
 - Só actions oficiais (`actions/*`), fixadas por SHA completo com o comentário da versão (D19). Novas versões entram via Dependabot, que respeita 7 dias de espera.
 - Passos sempre separados e nomeados; a instalação é literalmente `yarn install --frozen-lockfile`.
 
@@ -150,7 +156,7 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 - **D8**: MSW na linha 2.x (2.15.0).
 - **D9**: `exactOptionalPropertyTypes` desligado.
 - **D10**: O enunciado do curso não é versionado neste repositório.
-- **D11**: Ruleset da `main`: PR obrigatório com 0 aprovações, checks obrigatórios, modo loose, sem bypass.
+- **D11**: Ruleset da `main`: PR obrigatório com 0 aprovações, checks obrigatórios (`verify`, `e2e` e `pr-title`), merge só por squash, exclusão e force push bloqueados, modo loose, sem bypass.
 - **D12**: Ícones aprovados. Dependabot só para GitHub Actions, com cooldown de 7 dias, na Fase 1. axe fica de fora por ora; o lint de título de PR entrou na Fase 2 (D31).
 - **D13**: A A1 vale para as dependências diretas. Transitivas com menos de 7 dias são listadas no relatório de cada fase, sem fixação via `resolutions`.
 - **D14**: Os caminhos das rotas ficam centralizados em `src/lib/paths.ts`.
@@ -163,7 +169,7 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 - **D21**: Dependências diretas com versão exata (o lockfile resolve a versão escolhida); `@types/node` segue em `~22.19.x`.
 - **D22**: As versões auditadas são mantidas. Só se troca por correção relevante, com nova auditoria de data e `engines`.
 - **D23**: Coverage, user-event, preset PostCSS do Mantine, notifications e ícones entram nas fases em que forem usados.
-- **D24**: A página temporária "Em construção" fica em `src/routes/` e sai na Fase 3.
+- **D24**: A página temporária "Em construção" fica em `src/routes/` e sai no PR 3b da Fase 3.
 - **D25** (E1): O `HttpErrorNotifier` entra na Fase 2. Ele assina `httpErrorEvents` e mostra as falhas de rede, tempo esgotado, 5xx e 429 com `@mantine/notifications`, com um `id` por tipo de falha para não repetir a notificação.
 - **D26** (E2): Fixtures capturadas da API e enxutas, com tokens JWT sintéticos (assinatura falsa e `exp` em 2100 e 2101) e sem os dados sensíveis fictícios da DummyJSON (senha, documentos, banco, cripto).
 - **D27** (E3): Cobertura v8 com thresholds de 80/80/80/70 (linhas, statements, funções, branches) no geral e 90/90/90/85 em `lib`, `services`, `hooks` e `schemas`. O `yarn verify` e o CI rodam `test:coverage`.
@@ -174,9 +180,18 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 - **D32** (B2): Numa rota `/auth/*` (exceto o login) sem sessão salva, o interceptor rejeita localmente com `unauthorized`, sem enviar a requisição e sem evento. Com a sessão expirada, também não envia, apaga a sessão e emite `expired`; um 401 da API emite `rejected`.
 - **D33** (B3): No `useAsyncAction`, uma nova chamada de `run` aborta a anterior, que termina com `{ ok: false }` e erro `canceled`, sem mexer no estado. O `run` nunca rejeita.
 - **D34**: O build grava a versão na meta `app-version` do `index.html` e do `404.html` (o `GITHUB_SHA`, ou `local`). Depois do deploy, o smoke espera essa versão ficar no ar, porque o CDN do Pages guarda o HTML por até 10 minutos, e confere a meta.
+- **D35**: Esclarecimento da A1: uma versão que já está no lockfile como transitiva pode virar dependência direta mesmo com menos de 7 dias. Assim o `postcss` entrou na 8.5.29, a mesma do Vite, com uma única cópia; versões novas no lockfile seguem a regra.
+- **D36**: Os parâmetros do catálogo na URL são `q`, `categoria` e `pagina`, em pt-BR como as rotas, e viram `query`, `category` e `page` no código. Valores ausentes ou inválidos caem no padrão (`src/schemas/catalog.ts`).
+- **D37**: No mobile, a navegação pública abre num `Drawer` (prende o foco, fecha com Esc e ao escolher um item). O cabeçalho só tem links para rotas que já existem.
+- **D38**: A Fase 3 sai em dois PRs: 3a (layout, rotas, componentes de estado e hooks do catálogo) e 3b (páginas do catálogo, E2E do fluxo 1 e smoke final).
+- **D39**: `useDocumentTitle` define o título da aba por página e o restaura no cleanup.
+- **D40**: O seletor de tema claro/escuro fica para a Fase 7.
+- **D41**: Na Fase 4, o carrinho usa `useState` com funções puras que atualizam com spread, no lugar do `useReducer` que a A3 permitia. Assim o requisito 2.1 já fica evidenciado na Fase 4, sem depender do overlay do admin.
+- **D42**: O smoke roda com a API mockada no CI (preview local) e contra a API real em produção, como verificação contínua da integração; o E2E do CI continua todo mockado. Implementado no PR 3b.
+- **D43**: O `StockBadge` (PR 3b) mostra rótulos em pt-BR ("Em estoque", "Estoque baixo", "Esgotado"), não o texto em inglês da API. Nomes, descrições e avaliações seguem como vêm da API.
 - **A1**: Não adotar versão publicada há menos de 7 dias, exceto correção de segurança, e registrar a data de publicação (escopo em D13).
 - **A2**: `AppError` em `src/lib/errors.ts` (sem axios), `toAppError` em `services` e `HttpErrorNotifier` em `src/app/`. Única exceção de import: zodResolver → `@mantine/form`.
-- **A3**: O carrinho pode usar `useReducer`. O overlay do admin usa `useState` com atualizações funcionais e spread (evidência do requisito 2.1 citada no README).
+- **A3**: Ajustada pela D41: o carrinho usa `useState` com funções puras e spread, não `useReducer`. O overlay do admin usa `useState` com atualizações funcionais e spread.
 - **A4**: O logout limpa o overlay do admin.
 - **A5**: Moeda com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD' })`.
 - **A6**: Formato do token validado com `z.jwt()` do Zod 4, se existir na versão instalada.
