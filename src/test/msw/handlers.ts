@@ -103,6 +103,14 @@ function cartFromOrder(order: CheckoutRequest) {
   }
 }
 
+// Corpo JSON da requisição, quando é um objeto.
+async function readJsonObject(request: Request): Promise<object> {
+  const body: unknown = await request.json()
+  return typeof body === 'object' && body !== null && !Array.isArray(body)
+    ? body
+    : {}
+}
+
 export function hasBearer(request: Request): boolean {
   return request.headers.get('Authorization')?.startsWith('Bearer ') === true
 }
@@ -187,19 +195,30 @@ export const handlers: RequestHandler[] = [
   ...productReadHandlers('/products'),
   ...productReadHandlers('/auth/products'),
 
-  http.post(
-    `${API_URL}/auth/products/add`,
-    ({ request }) =>
-      requireBearer(request) ?? HttpResponse.json(productAdd, { status: 201 }),
-  ),
-  http.put(
-    `${API_URL}/auth/products/:id`,
-    ({ request, params }) =>
-      requireBearer(request) ??
-      (params['id'] === '1'
-        ? HttpResponse.json(productUpdate)
-        : HttpResponse.json(notFound, { status: 404 })),
-  ),
+  // Como a API: o POST devolve os campos enviados, com o id 195.
+  http.post(`${API_URL}/auth/products/add`, async ({ request }) => {
+    const denied = requireBearer(request)
+    if (denied !== undefined) {
+      return denied
+    }
+    return HttpResponse.json(
+      { ...(await readJsonObject(request)), id: productAdd.id },
+      { status: 201 },
+    )
+  }),
+  // Como a API: o PUT devolve 11 campos do produto, com os enviados por cima.
+  http.put(`${API_URL}/auth/products/:id`, async ({ request, params }) => {
+    const denied = requireBearer(request)
+    if (denied !== undefined) {
+      return denied
+    }
+    return params['id'] === '1'
+      ? HttpResponse.json({
+          ...productUpdate,
+          ...(await readJsonObject(request)),
+        })
+      : HttpResponse.json(notFound, { status: 404 })
+  }),
   http.delete(
     `${API_URL}/auth/products/:id`,
     ({ request, params }) =>

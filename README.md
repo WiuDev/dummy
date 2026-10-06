@@ -7,23 +7,24 @@
 
 Catálogo e compras em React + TypeScript que consome a API pública [DummyJSON](https://dummyjson.com). Tem uma área pública de navegação e uma área administrativa protegida por login.
 
-> Projeto em desenvolvimento. **Fase 5 (login e checkout) concluída**: login com validação, sessão com expiração e sincronizada entre abas, área administrativa protegida e checkout com confirmação estão prontos, junto com o catálogo e o carrinho. Próxima: **Fase 6 (admin)**.
+> Projeto em desenvolvimento. **Fase 6 (admin) concluída**: a gestão de produtos tem tabela paginada com busca, cadastro, edição e exclusão com confirmação, todos simulados na sessão. Ela se junta ao catálogo, ao carrinho, ao login e ao checkout, que já estavam prontos. Próxima: **Fase 7 (polimento e entrega)**.
 
 ## Sumário
 
 1. [Tema e visão geral](#tema-e-visão-geral)
 2. [Funcionalidades](#funcionalidades)
-3. [Stack](#stack)
-4. [Como executar localmente](#como-executar-localmente)
-5. [Scripts](#scripts)
-6. [Arquitetura](#arquitetura)
-7. [Decisões e limitações da API](#decisões-e-limitações-da-api)
-8. [Checklist dos 10 requisitos](#checklist-dos-10-requisitos)
-9. [Testes](#testes)
-10. [CI/CD, deploy e proteção da main](#cicd-deploy-e-proteção-da-main)
-11. [Convenções](#convenções)
-12. [Uso de IA](#uso-de-ia)
-13. [Créditos](#créditos)
+3. [Área administrativa](#área-administrativa)
+4. [Stack](#stack)
+5. [Como executar localmente](#como-executar-localmente)
+6. [Scripts](#scripts)
+7. [Arquitetura](#arquitetura)
+8. [Decisões e limitações da API](#decisões-e-limitações-da-api)
+9. [Checklist dos 10 requisitos](#checklist-dos-10-requisitos)
+10. [Testes](#testes)
+11. [CI/CD, deploy e proteção da main](#cicd-deploy-e-proteção-da-main)
+12. [Convenções](#convenções)
+13. [Uso de IA](#uso-de-ia)
+14. [Créditos](#créditos)
 
 ## Tema e visão geral
 
@@ -34,17 +35,34 @@ Tema escolhido: **catálogo e compras**, com os recursos `/products`, `/auth` e 
 
 ## Funcionalidades
 
-| Área    | Rota            | Funcionalidade                                                                                | Status    |
-| ------- | --------------- | --------------------------------------------------------------------------------------------- | --------- |
-| Pública | `/produtos`     | Grid responsivo com busca (debounce), filtro por categoria e paginação, tudo refletido na URL | concluído |
-| Pública | `/produtos/:id` | Imagens, preço e desconto, avaliação, estoque, avaliações de clientes e adicionar ao carrinho | concluído |
-| Pública | `/carrinho`     | Quantidades, remoção, totais e persistência; "Finalizar compra" exige login                   | concluído |
-| Pública | `/login`        | Autenticação com retorno à página de origem                                                   | concluído |
-| Admin   | `/admin`        | Tabela paginada com busca, cadastro, edição e exclusão de produtos                            | pendente  |
-
-O `/admin` já exige login e devolve à origem depois de entrar, mas a gestão de produtos chega na Fase 6.
+| Área    | Rota                                                 | Funcionalidade                                                                                | Status    |
+| ------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------- |
+| Pública | `/produtos`                                          | Grid responsivo com busca (debounce), filtro por categoria e paginação, tudo refletido na URL | concluído |
+| Pública | `/produtos/:id`                                      | Imagens, preço e desconto, avaliação, estoque, avaliações de clientes e adicionar ao carrinho | concluído |
+| Pública | `/carrinho`                                          | Quantidades, remoção, totais e persistência; "Finalizar compra" exige login                   | concluído |
+| Pública | `/login`                                             | Autenticação com retorno à página de origem                                                   | concluído |
+| Admin   | `/admin/produtos`                                    | Tabela paginada com busca e exclusão com confirmação; alterações simuladas sinalizadas        | concluído |
+| Admin   | `/admin/produtos/novo`, `/admin/produtos/:id/editar` | Cadastro e edição de produtos, com validação                                                  | concluído |
 
 Credenciais de teste da DummyJSON: `emilys` / `emilyspass` (há outras em https://dummyjson.com/users).
+
+## Área administrativa
+
+Entre com a conta de teste e abra `/admin`, que leva à gestão de produtos. O admin tem layout próprio, com barra lateral recolhível e o aviso de que as alterações são simuladas. Ele é carregado sob demanda (`React.lazy`), fora do código da área pública.
+
+- **Tabela:** 10 produtos por página, lidos pelas rotas autenticadas `/auth/products`. A busca procura no título e na descrição, como a da API. A busca e a página continuam as mesmas quando a pessoa vai ao formulário e volta.
+- **Cadastro e edição:** formulário validado com Zod e mensagens em pt-BR. Ele pede título, descrição, categoria, preço, desconto e estoque; marca, URL da imagem (só https) e tags são opcionais.
+- **Exclusão:** pede confirmação antes. O botão "Descartar alterações simuladas" volta aos dados da DummyJSON.
+
+A DummyJSON simula as escritas: responde como se tivesse gravado, mas não grava nada. Por isso o app guarda o resultado de cada uma num overlay da sessão. Na tabela, os produtos criados aqui aparecem no topo da página 1 com o selo "Local", os editados aparecem com o selo "Simulado" e os excluídos somem.
+
+Limitações:
+
+- **Duração:** as alterações valem só na aba (ficam no `sessionStorage`) e são apagadas quando a sessão termina, seja pelo Sair (nesta aba ou em outra) ou pela expiração.
+- **Paginação aproximada:** as páginas vêm do servidor e não se reequilibram. Uma página com um produto excluído mostra um item a menos, e os criados aqui entram a mais na página 1.
+- **Busca:** quem busca os produtos do servidor é a API, que só conhece os dados originais. Um produto editado aqui continua sendo encontrado pelo título e pela descrição antigos, embora a tabela mostre os novos. Os criados aqui são buscados no navegador, pelo mesmo critério da API.
+- **Itens criados aqui:** editar ou excluir um deles não chama a API, que não os conhece.
+- **Acesso:** qualquer conta logada entra no admin (veja as limitações de segurança da sessão).
 
 ## Stack
 
@@ -102,17 +120,25 @@ src/
 ├─ main.tsx                      # ponto de entrada: StrictMode + BrowserRouter (basename /dummy/)
 ├─ app/
 │  ├─ App.tsx                    # MantineProvider + tema + notificações + carrinho + rotas
-│  ├─ AppRoutes.tsx              # rotas declarativas com layout route
+│  ├─ AppRoutes.tsx              # rotas declarativas com layout routes; o admin com React.lazy
 │  ├─ HttpErrorNotifier.tsx      # notifica falhas de rede, tempo esgotado, 5xx e 429
 │  ├─ ScrollToTop.tsx            # volta ao topo ao mudar de caminho ou de página do catálogo
 │  └─ theme.ts                   # tema do Mantine
 ├─ components/                   # UI apresentacional: AppNavLink, PageHeader, AsyncContent,
-│                                # EmptyState, ErrorState e Price (+ CSS Modules)
+│                                # EmptyState, ErrorState, Price, PaginationNav e ConfirmDialog
 ├─ features/
+│  ├─ admin-products/
+│  │  ├─ index.ts                # API pública: AdminProductsProvider, useAdminProducts e as páginas
+│  │  ├─ context/                # AdminProductsContext, AdminProductsProvider (overlay e filtros)
+│  │  │                          # e as funções puras do overlay (overlay-state.ts)
+│  │  ├─ hooks/                  # useAdminProducts, useAdminProductPage, useAdminProduct e
+│  │  │                          # useProductMutations
+│  │  ├─ components/             # ProductsTable, ProductForm e os valores do formulário
+│  │  └─ pages/                  # AdminProductsPage (/admin/produtos) e ProductFormPage (novo e editar)
 │  ├─ auth/
-│  │  ├─ index.ts                # API pública: AuthProvider, useAuth, LoginPage, AccountNav
+│  │  ├─ index.ts                # API pública: AuthProvider, useAuth, useSignOut, LoginPage, AccountNav
 │  │  ├─ context/                # AuthContext e AuthProvider (sessão, expiração e outras abas)
-│  │  ├─ hooks/                  # useAuth (lança erro fora do AuthProvider)
+│  │  ├─ hooks/                  # useAuth (lança erro fora do AuthProvider) e useSignOut (Sair)
 │  │  ├─ components/             # LoginForm (@mantine/form + zodResolver) e AccountNav (cabeçalho)
 │  │  └─ pages/                  # LoginPage (/login), só para visitantes
 │  ├─ cart/
@@ -123,7 +149,7 @@ src/
 │  │  │                          # OrderConfirmation
 │  │  └─ pages/                  # CartPage (/carrinho)
 │  └─ catalog/
-│     ├─ index.ts                # API pública da feature: as duas páginas
+│     ├─ index.ts                # API pública: as duas páginas, o SearchField e o useCategories
 │     ├─ pages/                  # ProductsPage (/produtos) e ProductDetailsPage (/produtos/:id)
 │     ├─ components/             # ProductCard, ProductGrid, SearchField, CategorySelect,
 │     │                          # ProductGallery, ReviewList, StockBadge (+ CSS Modules)
@@ -134,14 +160,16 @@ src/
 │  ├─ useDebouncedValue.ts       # debounce com setTimeout e clearTimeout
 │  └─ useDocumentTitle.ts        # título da aba, restaurado no cleanup
 ├─ layouts/
-│  └─ PublicLayout.tsx           # AppShell: cabeçalho, navegação, menu mobile e <Outlet />
+│  ├─ PublicLayout.tsx           # AppShell: cabeçalho, navegação, menu mobile e <Outlet />
+│  └─ AdminLayout.tsx            # AppShell do admin: barra lateral recolhível, aviso e <Outlet />
 ├─ lib/
 │  ├─ errors.ts                  # AppError e mensagens em pt-BR
 │  ├─ events.ts                  # canais de eventos tipados
-│  ├─ storage.ts                 # localStorage versionado e validado com Zod
+│  ├─ storage.ts                 # localStorage e sessionStorage versionados e validados com Zod
 │  ├─ jwt.ts                     # leitura do payload do JWT
 │  ├─ auth-session.ts            # sessão de autenticação (dummy:auth:v1)
 │  ├─ cart-storage.ts            # carrinho salvo (dummy:cart:v1)
+│  ├─ admin-overlay.ts           # alterações simuladas do admin (dummy:admin-products:v1)
 │  ├─ image-fallback.ts          # imagem neutra para foto de produto que não carrega
 │  ├─ paths.ts                   # caminhos das rotas
 │  ├─ redirect.ts                # retorno depois do login (from validado)
@@ -149,8 +177,7 @@ src/
 │  └─ format.ts, pricing.ts      # moeda, contagens, percentual, nota e data em pt-BR; preços em centavos
 ├─ routes/
 │  ├─ NotFoundPage.tsx           # página não encontrada
-│  ├─ RequireAuth.tsx            # guard das rotas protegidas: sem sessão, leva ao login
-│  └─ AdminPlaceholderPage.tsx   # página provisória do /admin (sai na Fase 6)
+│  └─ RequireAuth.tsx            # guard das rotas protegidas: sem sessão, leva ao login
 ├─ schemas/                      # schemas Zod do contrato e dos parâmetros da URL
 ├─ services/
 │  ├─ api.ts                     # instância do Axios e interceptors
@@ -163,6 +190,7 @@ src/
    ├─ render.tsx                 # renderWithProviders
    ├─ location.tsx               # LocationDisplay: o endereço atual, para conferir a URL
    ├─ cart.ts                    # itens de carrinho de teste, com os dados das fixtures
+   ├─ admin.ts                   # páginas do servidor e produtos de teste do admin
    ├─ session.ts, jwt.ts         # sessões e JWTs sintéticos de teste
    ├─ msw/                       # servidor, handlers padrão e registro de requisições
    └─ fixtures/                  # respostas da API capturadas e enxutas
@@ -170,16 +198,20 @@ e2e/
 ├─ support/
 │  ├─ test.ts                    # test e expect com a fixture automática da API mockada
 │  ├─ mock-api.ts                # DummyJSON e CDN mockados; outros hosts bloqueados
-│  └─ fixtures.ts                # as fixtures de src/test, validadas com os schemas
+│  ├─ fixtures.ts                # as fixtures de src/test, validadas com os schemas
+│  └─ session.ts                 # script que grava uma sessão de teste antes de a página abrir
 ├─ catalog.spec.ts               # fluxo do catálogo, menu no celular e produto inexistente
 ├─ cart.spec.ts                  # carrinho e checkout com login (fluxo 2)
 ├─ auth.spec.ts                  # autenticação com redirecionamento (fluxo 3)
+├─ admin-products.spec.ts        # gestão de produtos (fluxo 4)
 └─ smoke.spec.ts                 # smoke (mockado no CI; em produção, com a API real)
 ```
 
+O build separa o admin do resto: o chunk principal tem cerca de 751 kB (233 kB com gzip), e o admin carrega sob demanda o layout (2 kB) e as páginas (41 kB). O Vite ainda avisa que o chunk principal passa de 500 kB; a divisão das dependências externas fica para a Fase 7.
+
 ## Decisões e limitações da API
 
-- A DummyJSON **simula** as escritas (POST, PUT, PATCH e DELETE) e não persiste nada. No admin, as alterações valerão só na sessão e serão sinalizadas como simuladas.
+- A DummyJSON **simula** as escritas (POST, PUT, PATCH e DELETE) e não persiste nada. No admin, as alterações valem só na sessão da aba e são sinalizadas como simuladas (veja [Área administrativa](#área-administrativa)).
 - A API não combina a busca textual com o filtro por categoria. Com os dois ativos, o catálogo traz a busca inteira (`limit=0`) e filtra e pagina no cliente.
 - Nomes, descrições e avaliações vêm em inglês, como a API os entrega; só os rótulos de estoque são traduzidos.
 - O carrinho fica no navegador e guarda os dados do produto do momento em que ele entrou. A API só recebe o carrinho no checkout, que exige login.
@@ -190,28 +222,29 @@ e2e/
 
 ## Checklist dos 10 requisitos
 
-| #   | Requisito                                             | Status    | Como foi resolvido                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| --- | ----------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Estrutura de componentes e tipagem com TypeScript     | concluído | Projeto criado com Vite (template react-ts) e TypeScript estrito, sem `any`. Componentes com props tipadas (`readonly`) e `children` (`PageHeader`, `EmptyState`, `AppNavLink` e `AsyncContent`, este com children como função), os do catálogo (`ProductCard`, `ProductGrid`, `SearchField`, `CategorySelect`, `ProductGallery`, `ReviewList` e `StockBadge`, em `src/features/catalog/components/`) e estilos em CSS Modules com o preset do Mantine (`src/components/`, `src/layouts/`, `src/features/catalog/components/`).                                                                                                                                                                                                                                                                                                        |
-| 2   | Estado reativo, imutabilidade e ciclo de vida         | concluído | O carrinho usa `useState` com funções puras que atualizam com spread em arrays e objetos e reaproveitam os itens que não mudam, com teste de imutabilidade sobre objetos congelados (`src/features/cart/context/cart-state.ts`). Hooks com cleanup no ciclo de vida: `useAsync` aborta a requisição com `AbortController` e descarta respostas atrasadas (os hooks do catálogo passam tarefas estáveis), `useDebouncedValue` cancela o timer, `useDocumentTitle` restaura o título da aba e o `CartProvider` tira o listener do evento `storage` ao desmontar (`src/hooks/`, `src/features/`). O `SearchField` guarda o texto em estado local, acompanha a busca da URL e só a grava depois do debounce; o `ScrollToTop` lê o tipo da navegação com `useEffectEvent`, sem torná-lo dependência do efeito (`src/app/ScrollToTop.tsx`).  |
-| 3   | Estado global com Context API e Custom Hooks          | concluído | `CartContext` e `CartProvider` guardam o carrinho para toda a aplicação, com `value` memoizado, totais em centavos e ações estáveis, e o custom hook `useCart` lança um erro fora do Provider (`src/features/cart/`); o carrinho é salvo em `dummy:cart:v1`, validado com Zod na hidratação e sincronizado entre abas pelo evento `storage` (`src/lib/cart-storage.ts`). O `AuthContext` e o `AuthProvider` fazem o mesmo com a sessão, e o `useAuth` também lança fora do Provider (`src/features/auth/`).                                                                                                                                                                                                                                                                                                                            |
-| 4   | Roteamento e layouts com React Router                 | concluído | `BrowserRouter` com `basename` (`src/main.tsx`) e rotas declarativas com layout route (`src/app/AppRoutes.tsx`): o `PublicLayout` persiste com `<Outlet />` (`src/layouts/PublicLayout.tsx`), `/` redireciona com `<Navigate replace>` e rotas desconhecidas mostram a `NotFoundPage`; o `AppNavLink` usa o `NavLink` e marca a rota ativa com `aria-current`. O catálogo guarda busca, categoria e página na URL com `useSearchParams` (`useCatalogParams`) e normaliza parâmetros inválidos com `<Navigate replace>`; o detalhe lê o id com `useParams` e volta com `useNavigate` (`src/features/catalog/pages/`); o `ScrollToTop` usa `useLocation` e `useNavigationType` para voltar ao topo, exceto no Voltar e no Avançar.                                                                                                       |
-| 5   | Interface gráfica e formulários com Mantine UI        | concluído | `MantineProvider` com tema e notificações (`src/app/App.tsx`, `src/app/theme.ts`); `AppShell` responsivo, com `Burger` e `Drawer` no mobile (`src/layouts/PublicLayout.tsx`); `Skeleton` e `LoadingOverlay` via `AsyncContent`. Formulário de login com `@mantine/form`, validado com Zod pelo `zodResolver` (`src/lib/forms/`), com mensagens em pt-BR, `TextInput`, `PasswordInput`, `Alert` e botão em loading (`src/features/auth/`). Listagem do catálogo em grade responsiva de `Card`, com busca em `TextInput`, categoria em `Select` e `Pagination` com rótulos em pt-BR (`src/features/catalog/`). No carrinho: quantidade com `NumberInput` limitado ao estoque, notificação ao adicionar, contador com `Badge` e resumo com o checkout (`src/features/cart/`). A tabela do admin, na Fase 6, reforça a parte de listagens. |
-| 6   | Fluxo de autenticação JWT e rotas protegidas          | concluído | Login pelo `POST /auth/login` (`src/features/auth/`), com a sessão salva e validada com Zod e a expiração lida do `exp` do JWT (`src/lib/auth-session.ts`). O `AuthProvider` encerra a sessão em três camadas: um timer até o vencimento (limitado ao máximo do `setTimeout`, que reconfere e reagenda), a volta à aba (`visibilitychange`) e o aviso do interceptor, que envia o Bearer nas rotas `/auth/*` e trata a sessão ausente, a vencida e o 401 (`src/services/api.ts`); outras abas são acompanhadas pelo evento `storage`. O `RequireAuth` protege o `/admin` e leva ao login com a origem no state, validada contra open redirect (`src/routes/RequireAuth.tsx`, `src/lib/redirect.ts`). O checkout usa o `POST /auth/carts/add` com o Bearer.                                                                             |
-| 7   | Consumo de API REST, interceptors e validação com Zod | concluído | Instância do Axios com `baseURL`, timeout e interceptors de request (Bearer) e de response (`AppError`), em `src/services/api.ts`; toda resposta validada com Zod (`src/services/parse-response.ts`, `src/schemas/`); falhas de rede, tempo esgotado, 5xx e 429 viram notificação global (`src/app/HttpErrorNotifier.tsx`). O formulário de login é validado com Zod pelo `zodResolver`, e o pedido do checkout, pelo `checkoutRequestSchema`. Os parâmetros do catálogo na URL passam por `.parse` com `.catch` (nunca lança: valor inválido cai no padrão), o id do produto por `.safeParse` (`src/schemas/catalog.ts`) e a origem do login por `.safeParse` (`src/lib/redirect.ts`).                                                                                                                                                |
-| 8   | Testes automatizados com Vitest e RTL                 | concluído | Vitest + jsdom + React Testing Library + jest-dom + user-event, com HTTP simulado pelo MSW (`src/test/msw/`) e `renderWithProviders` com roteador em memória, sessão e carrinho semeados (`src/test/render.tsx`); consultas por papel e nome; testes de contrato dos schemas e de services, hooks, componentes, layout, rotas, páginas do catálogo e do carrinho, autenticação (com fake timers na expiração) e checkout, com user-event também sob fake timers (debounce da busca); cobertura com thresholds (`vitest.config.ts`) no `yarn verify` e no CI.                                                                                                                                                                                                                                                                           |
-| 9   | Testes ponta a ponta com Playwright                   | concluído | Playwright headless contra o build de produção (`playwright.config.ts`), com a API mockada por uma fixture automática, inclusive o login e o checkout (`e2e/support/`). Três fluxos: (1) o catálogo, com busca, categoria, página, detalhe, Voltar e recarregamento, além do menu no celular e do produto inexistente (`e2e/catalog.spec.ts`); (2) o carrinho, com adicionar, o contador, alterar, remover e recarregar, e o checkout, que exige login e esvazia o carrinho (`e2e/cart.spec.ts`); (3) a autenticação com redirecionamento: o `/admin` leva ao login e volta, o Entrar do cabeçalho volta à página, e a sessão vencida leva ao login (`e2e/auth.spec.ts`). O smoke cobre a home, um deep link de produto, uma rota desconhecida e o 404.html e, depois do deploy, roda contra a API real (`e2e/smoke.spec.ts`).         |
-| 10  | Pipeline de CI/CD e deploy em produção                | concluído | CI (`.github/workflows/ci.yml`), deploy no GitHub Pages com smoke pós-deploy que espera a versão publicada (`.github/workflows/deploy.yml`), `base`, 404.html e meta `app-version` (`vite.config.ts`) e validação do título do PR (`.github/workflows/pr-title.yml`). Ruleset da `main` (configuração no GitHub): PR obrigatório, checks `verify`, `e2e` e `pr-title`, merge só por squash e exclusão e force push bloqueados.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| #   | Requisito                                             | Status    | Como foi resolvido                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --- | ----------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Estrutura de componentes e tipagem com TypeScript     | concluído | Projeto criado com Vite (template react-ts) e TypeScript estrito, sem `any`. Componentes com props tipadas (`readonly`) e `children` (`PageHeader`, `EmptyState`, `AppNavLink`, `AsyncContent`, este com children como função, e `ConfirmDialog`, com a mensagem da confirmação como children), os do catálogo (`ProductCard`, `ProductGrid`, `SearchField`, `CategorySelect`, `ProductGallery`, `ReviewList` e `StockBadge`, em `src/features/catalog/components/`), os do admin (`ProductsTable` e `ProductForm`, em `src/features/admin-products/components/`) e estilos em CSS Modules com o preset do Mantine (`src/components/`, `src/layouts/`, `src/features/catalog/components/`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 2   | Estado reativo, imutabilidade e ciclo de vida         | concluído | O carrinho usa `useState` com funções puras que atualizam com spread em arrays e objetos e reaproveitam os itens que não mudam, com teste de imutabilidade sobre objetos congelados (`src/features/cart/context/cart-state.ts`). O overlay do admin segue o mesmo padrão, também testado sobre objetos congelados (`src/features/admin-products/context/overlay-state.ts`), e os filtros da tabela (busca e página) ficam num objeto em `useState` atualizado com spread (`AdminProductsProvider`). Hooks com cleanup no ciclo de vida: `useAsync` aborta a requisição com `AbortController` e descarta respostas atrasadas (os hooks do catálogo passam tarefas estáveis), `useDebouncedValue` cancela o timer, `useDocumentTitle` restaura o título da aba e o `CartProvider` tira o listener do evento `storage` ao desmontar (`src/hooks/`, `src/features/`). O `SearchField` guarda o texto em estado local, acompanha a busca da URL e só a grava depois do debounce; o `ScrollToTop` lê o tipo da navegação com `useEffectEvent`, sem torná-lo dependência do efeito (`src/app/ScrollToTop.tsx`).                                                                                                                                        |
+| 3   | Estado global com Context API e Custom Hooks          | concluído | `CartContext` e `CartProvider` guardam o carrinho para toda a aplicação, com `value` memoizado, totais em centavos e ações estáveis, e o custom hook `useCart` lança um erro fora do Provider (`src/features/cart/`); o carrinho é salvo em `dummy:cart:v1`, validado com Zod na hidratação e sincronizado entre abas pelo evento `storage` (`src/lib/cart-storage.ts`). O `AuthContext` e o `AuthProvider` fazem o mesmo com a sessão, e o `useAuth` também lança fora do Provider (`src/features/auth/`). O `AdminProductsContext` e o `AdminProductsProvider` guardam as alterações simuladas e os filtros da tabela para as páginas do admin, e o `useAdminProducts` lança fora do Provider (`src/features/admin-products/`); o overlay fica em `dummy:admin-products:v1` no `sessionStorage`, validado com Zod (`src/lib/admin-overlay.ts`), e o `AuthProvider` o apaga quando a sessão termina.                                                                                                                                                                                                                                                                                                                                           |
+| 4   | Roteamento e layouts com React Router                 | concluído | `BrowserRouter` com `basename` (`src/main.tsx`) e rotas declarativas com layout route (`src/app/AppRoutes.tsx`): o `PublicLayout` persiste com `<Outlet />` (`src/layouts/PublicLayout.tsx`), `/` redireciona com `<Navigate replace>` e rotas desconhecidas mostram a `NotFoundPage`; o `AppNavLink` usa o `NavLink` e marca a rota ativa com `aria-current`. O catálogo guarda busca, categoria e página na URL com `useSearchParams` (`useCatalogParams`) e normaliza parâmetros inválidos com `<Navigate replace>`; o detalhe lê o id com `useParams` e volta com `useNavigate` (`src/features/catalog/pages/`); o `ScrollToTop` usa `useLocation` e `useNavigationType` para voltar ao topo, exceto no Voltar e no Avançar. O admin tem layout próprio, o `AdminLayout`, com as rotas aninhadas sob o `RequireAuth`: o `/admin` redireciona para `/admin/produtos`, a edição lê o id com `useParams` e, depois de salvar, volta à tabela com `navigate` e `replace`; o layout e as páginas do admin entram com `React.lazy` e `Suspense` (`src/app/AppRoutes.tsx`, `src/layouts/AdminLayout.tsx`).                                                                                                                                         |
+| 5   | Interface gráfica e formulários com Mantine UI        | concluído | `MantineProvider` com tema e notificações (`src/app/App.tsx`, `src/app/theme.ts`); `AppShell` responsivo, com `Burger` e `Drawer` no mobile (`src/layouts/PublicLayout.tsx`); `Skeleton` e `LoadingOverlay` via `AsyncContent`. Formulário de login com `@mantine/form`, validado com Zod pelo `zodResolver` (`src/lib/forms/`), com mensagens em pt-BR, `TextInput`, `PasswordInput`, `Alert` e botão em loading (`src/features/auth/`). Listagem do catálogo em grade responsiva de `Card`, com busca em `TextInput`, categoria em `Select` e `Pagination` com rótulos em pt-BR (`src/features/catalog/`). No carrinho: quantidade com `NumberInput` limitado ao estoque, notificação ao adicionar, contador com `Badge` e resumo com o checkout (`src/features/cart/`). No admin: `AppShell` com barra lateral recolhível (`src/layouts/AdminLayout.tsx`); tabela com `Table` em contêiner com rolagem, `Badge` de origem e `Pagination`; formulário de produto com `@mantine/form` e `zodResolver`, com `TextInput`, `Textarea`, `Select` com busca, `NumberInput`, `TagsInput` e `Fieldset` desabilitado durante o envio; confirmação de exclusão em `Modal` (`ConfirmDialog`) e notificações de sucesso (`src/features/admin-products/`). |
+| 6   | Fluxo de autenticação JWT e rotas protegidas          | concluído | Login pelo `POST /auth/login` (`src/features/auth/`), com a sessão salva e validada com Zod e a expiração lida do `exp` do JWT (`src/lib/auth-session.ts`). O `AuthProvider` encerra a sessão em três camadas: um timer até o vencimento (limitado ao máximo do `setTimeout`, que reconfere e reagenda), a volta à aba (`visibilitychange`) e o aviso do interceptor, que envia o Bearer nas rotas `/auth/*` e trata a sessão ausente, a vencida e o 401 (`src/services/api.ts`); outras abas são acompanhadas pelo evento `storage`. O `RequireAuth` protege o `/admin` e leva ao login com a origem no state, validada contra open redirect (`src/routes/RequireAuth.tsx`, `src/lib/redirect.ts`). O checkout usa o `POST /auth/carts/add` com o Bearer, e a gestão de produtos lê e escreve pelas rotas `/auth/products`, também com o Bearer.                                                                                                                                                                                                                                                                                                                                                                                               |
+| 7   | Consumo de API REST, interceptors e validação com Zod | concluído | Instância do Axios com `baseURL`, timeout e interceptors de request (Bearer) e de response (`AppError`), em `src/services/api.ts`; toda resposta validada com Zod (`src/services/parse-response.ts`, `src/schemas/`); falhas de rede, tempo esgotado, 5xx e 429 viram notificação global (`src/app/HttpErrorNotifier.tsx`). Os formulários de login e de produto são validados com Zod pelo `zodResolver`, este com o `productFormSchema` (mensagens em pt-BR e imagem só com https, em `src/schemas/product-form.ts`), e o pedido do checkout, pelo `checkoutRequestSchema`. Os parâmetros do catálogo na URL passam por `.parse` com `.catch` (nunca lança: valor inválido cai no padrão), o id do produto, no detalhe e na edição do admin, por `.safeParse` (`src/schemas/catalog.ts`) e a origem do login por `.safeParse` (`src/lib/redirect.ts`).                                                                                                                                                                                                                                                                                                                                                                                        |
+| 8   | Testes automatizados com Vitest e RTL                 | concluído | Vitest + jsdom + React Testing Library + jest-dom + user-event, com HTTP simulado pelo MSW (`src/test/msw/`) e `renderWithProviders` com roteador em memória, sessão e carrinho semeados (`src/test/render.tsx`); consultas por papel e nome; testes de contrato dos schemas e de services, hooks, componentes, layouts, rotas, páginas do catálogo, do carrinho e do admin, autenticação (com fake timers na expiração), checkout e as funções puras do overlay, com user-event também sob fake timers (debounce da busca); cobertura com thresholds (`vitest.config.ts`) no `yarn verify` e no CI.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 9   | Testes ponta a ponta com Playwright                   | concluído | Playwright headless contra o build de produção (`playwright.config.ts`), com a API mockada por uma fixture automática, inclusive o login e o checkout (`e2e/support/`). Quatro fluxos: (1) o catálogo, com busca, categoria, página, detalhe, Voltar e recarregamento, além do menu no celular e do produto inexistente (`e2e/catalog.spec.ts`); (2) o carrinho, com adicionar, o contador, alterar, remover e recarregar, e o checkout, que exige login e esvazia o carrinho (`e2e/cart.spec.ts`); (3) a autenticação com redirecionamento: o `/admin` leva ao login e volta, o Entrar do cabeçalho volta à página, e a sessão vencida leva ao login (`e2e/auth.spec.ts`); (4) a gestão de produtos, com o cadastro (inclusive um erro de validação), a edição, a exclusão de um item criado aqui, sem chamar a API, e de um do servidor, com o DELETE, as alterações mantidas ao recarregar, a busca e a página preservadas na ida ao formulário, o descarte e o Sair, que apaga as alterações (`e2e/admin-products.spec.ts`). O smoke cobre a home, um deep link de produto, uma rota desconhecida e o 404.html e, depois do deploy, roda contra a API real (`e2e/smoke.spec.ts`).                                                           |
+| 10  | Pipeline de CI/CD e deploy em produção                | concluído | CI (`.github/workflows/ci.yml`), deploy no GitHub Pages com smoke pós-deploy que espera a versão publicada (`.github/workflows/deploy.yml`), `base`, 404.html e meta `app-version` (`vite.config.ts`) e validação do título do PR (`.github/workflows/pr-title.yml`). Ruleset da `main` (configuração no GitHub): PR obrigatório, checks `verify`, `e2e` e `pr-title`, merge só por squash e exclusão e force push bloqueados.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Testes
 
 - **Unitários e de componentes:** Vitest 5 com jsdom, React Testing Library e jest-dom. As interações usam user-event, que também roda com fake timers no debounce da busca. Os testes ficam ao lado do código (`*.test.ts(x)`) e usam consultas acessíveis (`getByRole`, `getByText`). Rode com `yarn test`.
-- **HTTP simulado:** o MSW 2 intercepta as requisições do Axios. Os handlers padrão respondem com fixtures capturadas da API (tokens sintéticos, sem dados sensíveis) e uma requisição sem handler falha o teste. Os schemas têm testes de contrato contra essas fixtures.
+- **HTTP simulado:** o MSW 2 intercepta as requisições do Axios. Os handlers padrão respondem com fixtures capturadas da API (tokens sintéticos, sem dados sensíveis) e uma requisição sem handler falha o teste. O POST e o PUT de produtos devolvem o corpo enviado, como a API. Os schemas têm testes de contrato contra essas fixtures.
 - **Cobertura:** `yarn test:coverage` (v8) com thresholds de 80/80/80/70 (linhas, statements, funções, branches) no geral e 90/90/90/85 em `lib`, `services`, `hooks` e `schemas`. O relatório HTML fica em `coverage/` e o CI o publica como artefato.
-- **Ponta a ponta:** Playwright em modo headless contra o build de produção servido em `/dummy/`, com a API mockada. Uma fixture automática (`e2e/support/test.ts`) responde à DummyJSON com as mesmas fixtures dos testes unitários, validadas com os schemas, troca as imagens do CDN por um PNG transparente e bloqueia os outros hosts; uma requisição sem mock falha o teste. Rode com `yarn test:e2e`.
+- **Ponta a ponta:** Playwright em modo headless contra o build de produção servido em `/dummy/`, com a API mockada. Uma fixture automática (`e2e/support/test.ts`) responde à DummyJSON com as mesmas fixtures dos testes unitários, validadas com os schemas, troca as imagens do CDN por um PNG transparente e bloqueia os outros hosts; uma requisição sem mock falha o teste. Como a API, o mock não guarda estado: as escritas do admin respondem, mas não mudam as leituras. Rode com `yarn test:e2e`.
   - `e2e/catalog.spec.ts`: o fluxo do catálogo (busca, categoria, página, detalhe, Voltar e recarregamento, com o estado na URL), o menu na largura de celular e o produto inexistente.
   - `e2e/cart.spec.ts`: o carrinho (adicionar pelo detalhe, o contador do cabeçalho, alterar a quantidade, remover e recarregar mantendo os itens) e o checkout: sem login, "Finalizar compra" leva ao login, que volta ao carrinho; com login, o pedido é confirmado e o carrinho fica vazio.
-  - `e2e/auth.spec.ts`: o `/admin` sem sessão leva ao login, que mostra o erro de credenciais e, depois de entrar, volta ao `/admin` com o nome no cabeçalho; o Entrar do cabeçalho volta à página em que a pessoa estava; uma sessão salva vencida leva ao login, com aviso.
+  - `e2e/auth.spec.ts`: o `/admin` sem sessão leva ao login, que mostra o erro de credenciais e, depois de entrar, abre a gestão de produtos com o nome no cabeçalho do admin, cujo Sair volta ao catálogo; o Entrar do cabeçalho volta à página em que a pessoa estava; uma sessão salva vencida leva ao login, com aviso.
+  - `e2e/admin-products.spec.ts`: o cadastro (a imagem fora de https é recusada), a edição de um produto do servidor e as duas exclusões (a do item criado aqui não chama a API; a do servidor manda o DELETE), mantidas ao recarregar; a busca e a página preservadas na ida ao formulário e na volta; e o descarte, que volta aos dados da API, e o Sair, que apaga as alterações.
   - `e2e/smoke.spec.ts`: a home, que redireciona para o catálogo e lista os produtos (inclusive a meta `app-version`), o cabeçalho com a navegação ativa, um deep link de produto com recarregamento, uma rota desconhecida e o 404.html gerado no build. Ele confere a estrutura das páginas, não os dados, porque também roda em produção.
 - Depois de cada deploy, o smoke roda contra o site publicado e a API real, assim que a meta `app-version` mostra o commit do deploy (o CDN do Pages guarda o HTML por até 10 minutos). Lá o deep link responde HTTP 404 (o GitHub Pages serve o 404.html) e a aplicação abre a rota pedida.
 

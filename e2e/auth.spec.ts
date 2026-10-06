@@ -1,4 +1,4 @@
-import { fixtures } from './support/fixtures.ts'
+import { sessionScript } from './support/session.ts'
 import { expect, isDeployed, test } from './support/test.ts'
 
 // Fluxo 3: autenticação com redirecionamento, sobre a API mockada.
@@ -33,17 +33,15 @@ test.describe('autenticação', () => {
     await password.fill('emilyspass')
     await page.getByRole('button', { name: 'Entrar' }).click()
 
-    await expect(page).toHaveURL(/\/admin$/)
+    // O /admin leva à gestão de produtos, no layout do admin.
+    await expect(page).toHaveURL(/\/admin\/produtos$/)
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Área administrativa' }),
+      page.getByRole('heading', { level: 1, name: 'Gestão de produtos' }),
     ).toBeVisible()
-    await expect(nav.getByText('Emily')).toBeVisible()
-    await expect(nav.getByRole('link', { name: 'Admin' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
+    const adminHeader = page.getByRole('banner')
+    await expect(adminHeader.getByText('Emily')).toBeVisible()
 
-    await nav.getByRole('button', { name: 'Sair' }).click()
+    await adminHeader.getByRole('button', { name: 'Sair' }).click()
 
     await expect(page).toHaveURL(/\/produtos$/)
     await expect(nav.getByRole('link', { name: 'Entrar' })).toBeVisible()
@@ -69,17 +67,7 @@ test.describe('autenticação', () => {
   test('uma sessão salva vencida leva ao login, com aviso', async ({
     page,
   }) => {
-    const { id, username, email, firstName, lastName, image } = fixtures.login
-    const expiredSession = JSON.stringify({
-      version: 1,
-      accessToken: fixtures.login.accessToken,
-      expiresAt: Date.now() - 60_000,
-      user: { id, username, email, firstName, lastName, image },
-    })
-    // Script como texto: o tsconfig do E2E não tem os tipos do DOM.
-    await page.addInitScript({
-      content: `localStorage.setItem('dummy:auth:v1', ${JSON.stringify(expiredSession)})`,
-    })
+    await page.addInitScript({ content: sessionScript(Date.now() - 60_000) })
 
     await page.goto('admin')
 

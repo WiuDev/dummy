@@ -2,4 +2,5 @@
 export { AccountNav } from './components/AccountNav'
 export { AuthProvider } from './context/AuthProvider'
 export { useAuth } from './hooks/useAuth'
+export { useSignOut } from './hooks/useSignOut'
 export { LoginPage } from './pages/LoginPage'

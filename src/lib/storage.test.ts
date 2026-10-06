@@ -4,6 +4,7 @@ import {
   createMemoryStorage,
   createStorageItem,
   getBrowserStorage,
+  getSessionStorage,
   onStorageKeyChange,
   type StorageLike,
 } from './storage'
@@ -115,6 +116,31 @@ describe('getBrowserStorage', () => {
       expect(storage.getItem('dummy:x')).toBeNull()
     } finally {
       // Restaura já aqui: o afterEach global usa o localStorage.
+      blocked.mockRestore()
+    }
+  })
+})
+
+describe('getSessionStorage', () => {
+  it('usa o sessionStorage quando ele está disponível', () => {
+    expect(getSessionStorage()).toBe(window.sessionStorage)
+  })
+
+  it('cai para a memória quando o navegador bloqueia o sessionStorage', () => {
+    const blocked = vi
+      .spyOn(window, 'sessionStorage', 'get')
+      .mockImplementation(() => {
+        throw new DOMException('acesso negado', 'SecurityError')
+      })
+
+    try {
+      const storage = getSessionStorage()
+      storage.setItem('dummy:x', '1')
+
+      expect(storage.getItem('dummy:x')).toBe('1')
+      expect(storage).not.toBe(getBrowserStorage())
+    } finally {
+      // Restaura já aqui: o afterEach global usa o sessionStorage.
       blocked.mockRestore()
     }
   })

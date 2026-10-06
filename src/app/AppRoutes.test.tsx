@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/test/render'
+import { activeSession } from '@/test/session'
 import { AppRoutes } from './AppRoutes'
 
 function renderRoute(route: string) {
@@ -86,11 +87,57 @@ describe('AppRoutes', () => {
     await user.type(within(main).getByLabelText('Senha'), 'emilyspass')
     await user.click(within(main).getByRole('button', { name: 'Entrar' }))
 
+    // O /admin leva à gestão de produtos, que chega num chunk próprio.
     expect(
-      await within(main).findByRole('heading', {
+      await screen.findByRole('heading', {
         level: 1,
-        name: 'Área administrativa',
+        name: 'Gestão de produtos',
       }),
+    ).toBeInTheDocument()
+  })
+
+  it('logado, o /admin abre a gestão de produtos no layout do admin', async () => {
+    renderWithProviders(<AppRoutes />, {
+      route: '/admin',
+      session: activeSession(),
+    })
+
+    expect(
+      await screen.findByRole('table', { name: 'Produtos' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('navigation', { name: 'Navegação do admin' }),
+    ).toBeInTheDocument()
+  })
+
+  it('da tabela, Novo produto abre o formulário, também sob demanda', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AppRoutes />, {
+      route: '/admin/produtos',
+      session: activeSession(),
+    })
+
+    await user.click(await screen.findByRole('link', { name: 'Novo produto' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Novo produto' }),
+    ).toBeInTheDocument()
+  })
+
+  it('uma rota desconhecida do admin mostra a página não encontrada no layout do admin', async () => {
+    renderWithProviders(<AppRoutes />, {
+      route: '/admin/qualquer-coisa',
+      session: activeSession(),
+    })
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Página não encontrada',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('navigation', { name: 'Navegação do admin' }),
     ).toBeInTheDocument()
   })
 

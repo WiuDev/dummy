@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { paths } from './paths'
+import { isAdminPath, paths } from './paths'
 
 describe('paths', () => {
   it('monta o caminho do detalhe de um produto', () => {
@@ -16,5 +16,21 @@ describe('paths', () => {
     expect(paths.cart).toBe('/carrinho')
     expect(paths.login).toBe('/login')
     expect(paths.admin).toBe('/admin')
+  })
+
+  it('monta os caminhos da gestão de produtos sob /admin', () => {
+    expect(paths.adminProducts).toBe('/admin/produtos')
+    expect(paths.adminProductNew).toBe('/admin/produtos/novo')
+    expect(paths.adminProductEditPattern).toBe('/admin/produtos/:id/editar')
+    expect(paths.adminProductEdit(10_000)).toBe('/admin/produtos/10000/editar')
+  })
+
+  it.each([
+    ['/admin', true],
+    ['/admin/produtos/1/editar', true],
+    ['/administrador', false],
+    ['/produtos', false],
+  ])('%s é da área administrativa: %s', (pathname, expected) => {
+    expect(isAdminPath(pathname)).toBe(expected)
   })
 })

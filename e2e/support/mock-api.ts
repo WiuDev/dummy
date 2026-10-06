@@ -73,6 +73,14 @@ function requestLabel(route: Route): string {
   return `${route.request().method()} ${route.request().url()}`
 }
 
+// A requisição traz o Bearer do token da fixture de login.
+function hasTestBearer(route: Route): boolean {
+  return (
+    route.request().headers()['authorization'] ===
+    `Bearer ${fixtures.login.accessToken}`
+  )
+}
+
 function isTestAccount(body: unknown): boolean {
   return (
     typeof body === 'object' &&
@@ -139,10 +147,7 @@ function handlePost(route: Route, unhandled: string[]): Promise<void> {
       : fulfillJson(route, { message: 'Invalid credentials' }, 400)
   }
   if (pathname === '/auth/carts/add') {
-    if (
-      request.headers()['authorization'] !==
-      `Bearer ${fixtures.login.accessToken}`
-    ) {
+    if (!hasTestBearer(route)) {
       return fulfillJson(route, { message: 'Access Token is required' }, 401)
     }
     const order = checkoutRequestSchema.safeParse(body)
@@ -150,9 +155,70 @@ function handlePost(route: Route, unhandled: string[]): Promise<void> {
       ? fulfillJson(route, cartFromOrder(order.data), 201)
       : fulfillJson(route, { message: 'Invalid cart' }, 400)
   }
+  // Como a API, o cadastro devolve os campos enviados, com o id 195.
+  if (pathname === '/auth/products/add') {
+    if (!hasTestBearer(route)) {
+      return fulfillJson(route, { message: 'Access Token is required' }, 401)
+    }
+    return fulfillJson(route, { ...asObject(body), id: 195 }, 201)
+  }
 
   unhandled.push(requestLabel(route))
   return fulfillJson(route, { message: `Rota não mockada: ${pathname}` }, 404)
+}
+
+function asObject(value: unknown): object {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value
+    : {}
+}
+
+// PUT e DELETE de /auth/products/:id, como a API: só para os produtos que ela
+// conhece. O PUT devolve 11 campos do produto, com os enviados por cima; o
+// DELETE devolve o produto inteiro, marcado como excluído (D61).
+function handleProductWrite(route: Route, unhandled: string[]): Promise<void> {
+  const request = route.request()
+  const { pathname } = new URL(request.url())
+  const match = /^\/auth\/products\/(\d+)$/.exec(pathname)
+  if (match === null) {
+    unhandled.push(requestLabel(route))
+    return fulfillJson(route, { message: `Rota não mockada: ${pathname}` }, 404)
+  }
+  if (!hasTestBearer(route)) {
+    return fulfillJson(route, { message: 'Access Token is required' }, 401)
+  }
+  const product = findProduct(Number(match[1]))
+  if (product === undefined) {
+    return fulfillJson(
+      route,
+      { message: `Product with id '${match[1] ?? ''}' not found` },
+      404,
+    )
+  }
+  if (request.method() === 'DELETE') {
+    return fulfillJson(route, {
+      ...product,
+      isDeleted: true,
+      deletedOn: new Date().toISOString(),
+    })
+  }
+  const { id, title, price, discountPercentage, stock, rating, images } =
+    product
+  const { thumbnail, description, brand, category } = product
+  return fulfillJson(route, {
+    id,
+    title,
+    price,
+    discountPercentage,
+    stock,
+    rating,
+    images,
+    thumbnail,
+    description,
+    brand,
+    category,
+    ...asObject(request.postDataJSON()),
+  })
 }
 
 // Responde como a DummyJSON. Rota ou método sem mock entra em unhandled (e
@@ -160,10 +226,23 @@ function handlePost(route: Route, unhandled: string[]): Promise<void> {
 function handleApi(route: Route, unhandled: string[]): Promise<void> {
   const request = route.request()
   const url = new URL(request.url())
-  const { pathname } = url
+
+  // As leituras do admin (/auth/products) têm o mesmo contrato das públicas,
+  // mas exigem o Bearer (D28).
+  const isAdminRead =
+    request.method() === 'GET' && url.pathname.startsWith('/auth/products')
+  if (isAdminRead && !hasTestBearer(route)) {
+    return fulfillJson(route, { message: 'Access Token is required' }, 401)
+  }
+  const pathname = isAdminRead
+    ? url.pathname.slice('/auth'.length)
+    : url.pathname
 
   if (request.method() === 'POST') {
     return handlePost(route, unhandled)
+  }
+  if (request.method() === 'PUT' || request.method() === 'DELETE') {
+    return handleProductWrite(route, unhandled)
   }
   if (request.method() !== 'GET') {
     unhandled.push(requestLabel(route))

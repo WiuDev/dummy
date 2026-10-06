@@ -6,7 +6,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 export const SEARCH_DEBOUNCE_MS = 400
 
 export interface SearchFieldProps {
-  // Busca atual, vinda da URL.
+  // Busca atual: no catálogo, vem da URL; na gestão de produtos, dos filtros.
   readonly value: string
   // Chamado 400 ms depois da última tecla, só se o texto diferir da busca atual.
   readonly onSearch: (query: string) => void
