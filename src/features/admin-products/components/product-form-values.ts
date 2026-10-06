@@ -1,8 +1,5 @@
-import type {
-  AdminProduct,
-  ProductFormData,
-  ProductFormValues,
-} from '@/schemas/admin'
+import type { AdminProduct } from '@/schemas/admin'
+import type { ProductFormData, ProductFormValues } from '@/schemas/product-form'
 import type { AdminProductFields } from '../context/overlay-state'
 
 // Formulário de cadastro, vazio (o desconto começa em 0).

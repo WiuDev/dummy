@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { productFormSchema, type ProductFormValues } from './admin'
+import { productFormSchema, type ProductFormValues } from './product-form'
 
 const valid: ProductFormValues = {
   title: 'Luminária de mesa',

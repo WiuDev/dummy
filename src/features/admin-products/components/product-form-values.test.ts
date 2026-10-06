@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { productFormSchema } from '@/schemas/admin'
+import { productFormSchema } from '@/schemas/product-form'
 import { lampFields, mascaraAdmin } from '@/test/admin'
 import {
   emptyProductForm,

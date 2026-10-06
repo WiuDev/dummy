@@ -17,7 +17,10 @@ import { Link } from 'react-router'
 import { useCategories } from '@/features/catalog'
 import { zodResolver } from '@/lib/forms/zodResolver'
 import { paths } from '@/lib/paths'
-import { productFormSchema, type ProductFormValues } from '@/schemas/admin'
+import {
+  productFormSchema,
+  type ProductFormValues,
+} from '@/schemas/product-form'
 import type { AdminProductFields } from '../context/overlay-state'
 import { toProductFields } from './product-form-values'
 
