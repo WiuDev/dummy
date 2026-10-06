@@ -1,22 +1,52 @@
-import { screen, within } from '@testing-library/react'
+import { notifications } from '@mantine/notifications'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route, Routes } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { delay, http, HttpResponse } from 'msw'
+import { Route, Routes, useLocation } from 'react-router'
+import { afterEach, describe, expect, it } from 'vitest'
+import { readSession } from '@/lib/auth-session'
 import { readCartItems } from '@/lib/cart-storage'
+import { redirectTarget } from '@/lib/redirect'
 import type { CartItem } from '@/schemas/cart'
 import { mascaraItem, paletteItem } from '@/test/cart'
+import { API_URL } from '@/test/msw/handlers'
+import { server } from '@/test/msw/server'
 import { renderWithProviders } from '@/test/render'
+import { activeSession } from '@/test/session'
 import { CartPage } from './CartPage'
 
-function renderCart(cartItems: readonly CartItem[]) {
+// No lugar do login: mostra para onde ele voltaria.
+function LoginProbe() {
+  const location = useLocation()
+  return <p>Login, depois {redirectTarget(location.state)}</p>
+}
+
+function renderCart(
+  cartItems: readonly CartItem[],
+  { signedIn = false }: { readonly signedIn?: boolean } = {},
+) {
   return renderWithProviders(
     <Routes>
       <Route path="/carrinho" element={<CartPage />} />
       <Route path="/produtos" element={<p>Catálogo</p>} />
+      <Route path="/login" element={<LoginProbe />} />
     </Routes>,
-    { route: '/carrinho', cartItems },
+    {
+      route: '/carrinho',
+      cartItems,
+      ...(signedIn ? { session: activeSession() } : {}),
+    },
   )
 }
+
+afterEach(() => {
+  act(() => {
+    notifications.clean()
+  })
+})
+
+const checkoutButton = () =>
+  screen.getByRole('button', { name: 'Finalizar compra' })
 
 const summary = () => screen.getByRole('region', { name: 'Resumo' })
 const quantityOf = (title: string) =>
@@ -145,5 +175,126 @@ describe('CartPage', () => {
       }),
     ).toBeInTheDocument()
     expect(readCartItems()).toEqual([])
+  })
+})
+
+describe('CartPage: finalizar a compra', () => {
+  const ITEMS = [{ ...mascaraItem, quantity: 2 }, paletteItem]
+
+  it('sem login, leva ao login, que volta para o carrinho', async () => {
+    const user = userEvent.setup()
+    renderCart(ITEMS)
+
+    expect(
+      screen.getByText(
+        'Para finalizar, entre na sua conta. O carrinho continua aqui.',
+      ),
+    ).toBeInTheDocument()
+    await user.click(checkoutButton())
+
+    expect(screen.getByText('Login, depois /carrinho')).toBeInTheDocument()
+    expect(readCartItems()).toEqual(ITEMS)
+  })
+
+  it('com login, confirma o pedido e esvazia o carrinho', async () => {
+    const user = userEvent.setup()
+    renderCart(ITEMS, { signedIn: true })
+
+    await user.click(checkoutButton())
+
+    const heading = await screen.findByRole('heading', {
+      level: 2,
+      name: 'Pedido confirmado',
+    })
+    expect(heading).toHaveFocus()
+    expect(
+      screen.getByText('Pedido nº 209: 3 itens, total de US$ 34,23.'),
+    ).toBeInTheDocument()
+    expect(readCartItems()).toEqual([])
+
+    await user.click(screen.getByRole('link', { name: 'Continuar comprando' }))
+
+    expect(screen.getByText('Catálogo')).toBeInTheDocument()
+  })
+
+  it('durante o envio, o carrinho não muda', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.post(`${API_URL}/auth/carts/add`, async () => {
+        await delay('infinite')
+        return HttpResponse.json({})
+      }),
+    )
+    renderCart(ITEMS, { signedIn: true })
+
+    await user.click(checkoutButton())
+
+    expect(checkoutButton()).toHaveAttribute('data-loading', 'true')
+    expect(quantityOf('Essence Mascara Lash Princess')).toBeDisabled()
+    expect(
+      screen.getByRole('button', {
+        name: 'Remover Essence Mascara Lash Princess do carrinho',
+      }),
+    ).toBeDisabled()
+  })
+
+  it('na falha, avisa e mantém o carrinho para tentar de novo', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.post(
+        `${API_URL}/auth/carts/add`,
+        () => HttpResponse.json({ message: 'falhou' }, { status: 500 }),
+        { once: true },
+      ),
+    )
+    renderCart(ITEMS, { signedIn: true })
+
+    await user.click(checkoutButton())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível finalizar a compraErro no servidor. Tente novamente.',
+    )
+    expect(readCartItems()).toEqual(ITEMS)
+
+    await user.click(checkoutButton())
+
+    expect(
+      await screen.findByRole('heading', { name: 'Pedido confirmado' }),
+    ).toBeInTheDocument()
+  })
+
+  it('quando a API descarta produtos, avisa e mantém o carrinho', async () => {
+    const user = userEvent.setup()
+    const items = [mascaraItem, { ...paletteItem, id: 9999 }]
+    renderCart(items, { signedIn: true })
+
+    await user.click(checkoutButton())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Alguns produtos do carrinho não estão mais disponíveis. Revise o carrinho e tente de novo.',
+    )
+    expect(readCartItems()).toEqual(items)
+  })
+
+  it('com a sessão recusada (401), avisa e o botão volta a levar ao login', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.post(`${API_URL}/auth/carts/add`, () =>
+        HttpResponse.json({ message: 'invalid signature' }, { status: 401 }),
+      ),
+    )
+    renderCart(ITEMS, { signedIn: true })
+
+    await user.click(checkoutButton())
+
+    expect(
+      await screen.findByText('Sua sessão expirou. Entre novamente.'),
+    ).toBeInTheDocument()
+    expect(readSession()).toBeNull()
+    expect(readCartItems()).toEqual(ITEMS)
+
+    await user.click(checkoutButton())
+
+    expect(screen.getByText('Login, depois /carrinho')).toBeInTheDocument()
   })
 })

@@ -1,7 +1,8 @@
+import { notifications } from '@mantine/notifications'
 import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes, useLocation, useNavigate } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { redirectTarget } from '@/lib/redirect'
 import { unauthorizedEvents } from '@/services/http-events'
 import { LocationDisplay } from '@/test/location'
@@ -45,6 +46,12 @@ function renderProtected(initialEntries: readonly string[], signedIn: boolean) {
     { initialEntries, ...(signedIn ? { session: activeSession() } : {}) },
   )
 }
+
+afterEach(() => {
+  act(() => {
+    notifications.clean()
+  })
+})
 
 const address = () => screen.getByLabelText('Endereço atual')
 

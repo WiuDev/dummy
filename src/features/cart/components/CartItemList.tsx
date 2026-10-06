@@ -6,12 +6,15 @@ export interface CartItemListProps {
   readonly items: readonly CartItem[]
   readonly onQuantityChange: (productId: number, quantity: number) => void
   readonly onRemove: (productId: number) => void
+  // Durante o envio do pedido, o carrinho não muda.
+  readonly disabled?: boolean
 }
 
 export function CartItemList({
   items,
   onQuantityChange,
   onRemove,
+  disabled = false,
 }: CartItemListProps) {
   return (
     <ul aria-label="Itens do carrinho" className={classes.list}>
@@ -21,6 +24,7 @@ export function CartItemList({
           item={item}
           onQuantityChange={onQuantityChange}
           onRemove={onRemove}
+          disabled={disabled}
         />
       ))}
     </ul>
