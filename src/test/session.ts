@@ -3,9 +3,20 @@ import type { AuthSession } from '@/schemas/auth'
 import loginFixture from '@/test/fixtures/login.json'
 import { createTestJwt } from './jwt'
 
-// Grava no localStorage uma sessão válida (o token da fixture vence em 2100).
+// Sessão válida, sem gravar: o token da fixture vence em 2100.
+export function activeSession(): AuthSession {
+  return createSession(loginFixture)
+}
+
+// Sessão que vence daqui a ms milissegundos (testes de expiração com fake
+// timers).
+export function sessionExpiringIn(ms: number): AuthSession {
+  return { ...activeSession(), expiresAt: Date.now() + ms }
+}
+
+// Grava no localStorage uma sessão válida.
 export function seedActiveSession(): AuthSession {
-  const session = createSession(loginFixture)
+  const session = activeSession()
   writeSession(session)
   return session
 }

@@ -2,9 +2,11 @@ import { Title } from '@mantine/core'
 import { screen } from '@testing-library/react'
 import { useLocation } from 'react-router'
 import { describe, expect, it } from 'vitest'
+import { useAuth } from '@/features/auth'
 import { useCart } from '@/features/cart'
 import { mascaraItem, paletteItem } from './cart'
 import { renderWithProviders } from './render'
+import { activeSession } from './session'
 
 // Componente do Mantine que lê a rota: só renderiza com os dois providers.
 function CurrentRoute() {
@@ -15,6 +17,11 @@ function CurrentRoute() {
 function CartCount() {
   const { totals } = useCart()
   return <p>{totals.itemCount} no carrinho</p>
+}
+
+function CurrentUser() {
+  const { user } = useAuth()
+  return <p>{user === null ? 'Visitante' : `Logado como ${user.firstName}`}</p>
 }
 
 describe('renderWithProviders', () => {
@@ -56,5 +63,17 @@ describe('renderWithProviders', () => {
     renderWithProviders(<CartCount />)
 
     expect(screen.getByText('0 no carrinho')).toBeInTheDocument()
+  })
+
+  it('monta a autenticação com a sessão semeada, ou como visitante', () => {
+    const { unmount } = renderWithProviders(<CurrentUser />, {
+      session: activeSession(),
+    })
+    expect(screen.getByText('Logado como Emily')).toBeInTheDocument()
+    unmount()
+    window.localStorage.clear()
+
+    renderWithProviders(<CurrentUser />)
+    expect(screen.getByText('Visitante')).toBeInTheDocument()
   })
 })

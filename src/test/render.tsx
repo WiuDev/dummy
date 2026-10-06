@@ -8,8 +8,11 @@ import {
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { theme } from '@/app/theme'
+import { AuthProvider } from '@/features/auth'
 import { CartProvider } from '@/features/cart'
+import { writeSession } from '@/lib/auth-session'
 import { writeCartItems } from '@/lib/cart-storage'
+import type { AuthSession } from '@/schemas/auth'
 import type { CartItem } from '@/schemas/cart'
 
 export interface RenderWithProvidersOptions extends Omit<
@@ -23,22 +26,30 @@ export interface RenderWithProvidersOptions extends Omit<
   // Itens já no carrinho: gravados no storage do jsdom (em memória e limpo
   // depois de cada teste) antes de montar o CartProvider.
   readonly cartItems?: readonly CartItem[]
+  // Sessão já ativa (ex.: activeSession() de src/test/session.ts), gravada no
+  // storage do jsdom antes de montar o AuthProvider.
+  readonly session?: AuthSession
 }
 
 // Envolve o componente nos providers da aplicação: Mantine em modo de teste
-// (sem transições nem portais), notificações, roteador em memória e carrinho.
+// (sem transições nem portais), notificações, roteador em memória, sessão e
+// carrinho.
 export function renderWithProviders(
   ui: ReactElement,
   {
     route = '/',
     initialEntries,
     cartItems,
+    session,
     ...options
   }: RenderWithProvidersOptions = {},
 ): RenderResult {
   const entries = initialEntries ?? [route]
   if (cartItems !== undefined) {
     writeCartItems(cartItems)
+  }
+  if (session !== undefined) {
+    writeSession(session)
   }
 
   function Providers({ children }: { readonly children: ReactNode }) {
@@ -49,7 +60,9 @@ export function renderWithProviders(
           initialEntries={[...entries]}
           initialIndex={entries.length - 1}
         >
-          <CartProvider>{children}</CartProvider>
+          <AuthProvider>
+            <CartProvider>{children}</CartProvider>
+          </AuthProvider>
         </MemoryRouter>
       </MantineProvider>
     )
