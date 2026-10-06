@@ -1,0 +1,31 @@
+{
+  "products": [
+    {
+      "id": 101,
+      "title": "Apple AirPods Max Silver",
+      "price": 549.99,
+      "discountPercentage": 13.67,
+      "rating": 3.47,
+      "stock": 59,
+      "thumbnail": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-airpods-max-silver/thumbnail.webp",
+      "category": "mobile-accessories",
+      "brand": "Apple",
+      "availabilityStatus": "In Stock"
+    },
+    {
+      "id": 104,
+      "title": "Apple iPhone Charger",
+      "price": 19.99,
+      "discountPercentage": 18.52,
+      "rating": 4.15,
+      "stock": 31,
+      "thumbnail": "https://cdn.dummyjson.com/product-images/mobile-accessories/apple-iphone-charger/thumbnail.webp",
+      "category": "mobile-accessories",
+      "brand": "Apple",
+      "availabilityStatus": "In Stock"
+    }
+  ],
+  "total": 23,
+  "skip": 0,
+  "limit": 2
+}

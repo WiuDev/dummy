@@ -27,10 +27,30 @@ function githubPagesSpaFallback(): Plugin {
   }
 }
 
+// Grava no <head> a versão do build: o SHA do commit no GitHub Actions e
+// "local" fora dele. O smoke pós-deploy espera o site publicado exibir o SHA
+// do próprio workflow, para nunca testar a versão anterior.
+function appVersionMeta(): Plugin {
+  const version = process.env.GITHUB_SHA ?? 'local'
+
+  return {
+    name: 'app-version-meta',
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'meta',
+          attrs: { name: 'app-version', content: version },
+          injectTo: 'head',
+        },
+      ]
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '/dummy/',
-  plugins: [react(), githubPagesSpaFallback()],
+  plugins: [react(), appVersionMeta(), githubPagesSpaFallback()],
   resolve: {
     // Usa o `paths` do tsconfig (alias `@/` → `src/`).
     tsconfigPaths: true,

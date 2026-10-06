@@ -1,0 +1,30 @@
+{
+  "id": 209,
+  "products": [
+    {
+      "id": 1,
+      "title": "Essence Mascara Lash Princess",
+      "price": 9.99,
+      "quantity": 2,
+      "total": 19.98,
+      "discountPercentage": 10.48,
+      "discountedPrice": 18,
+      "thumbnail": "https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp"
+    },
+    {
+      "id": 121,
+      "title": "iPhone 5s",
+      "price": 199.99,
+      "quantity": 1,
+      "total": 199.99,
+      "discountPercentage": 12.91,
+      "discountedPrice": 174,
+      "thumbnail": "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/thumbnail.webp"
+    }
+  ],
+  "total": 219.97,
+  "discountedTotal": 192,
+  "userId": 1,
+  "totalProducts": 2,
+  "totalQuantity": 3
+}

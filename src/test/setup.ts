@@ -1,10 +1,24 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
+import { afterAll, afterEach, beforeAll } from 'vitest'
+import { server } from './msw/server'
+
+// Toda requisição dos testes passa pelo MSW; uma rota sem handler falha o teste.
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' })
+})
 
 // Sem `globals`, a limpeza automática do Testing Library não é registrada.
 afterEach(() => {
   cleanup()
+  server.resetHandlers()
+  server.events.removeAllListeners()
+  window.localStorage.clear()
+  window.sessionStorage.clear()
+})
+
+afterAll(() => {
+  server.close()
 })
 
 // Polyfills que o Mantine exige no jsdom, adaptados (com tipos) do guia
