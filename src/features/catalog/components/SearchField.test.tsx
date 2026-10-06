@@ -1,16 +1,15 @@
 import { act, fireEvent, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@/test/render'
 import { SEARCH_DEBOUNCE_MS, SearchField } from './SearchField'
 
-// Sem rede, o debounce é controlado com fake timers. O fireEvent é síncrono: o
-// user-event depende de um setTimeout do Testing Library que, com os fake
-// timers do Vitest, nunca dispara. As interações com user-event ficam nos
-// testes da página, com timers reais.
-beforeEach(() => {
-  vi.useFakeTimers()
-})
-
+// Sem rede, o debounce é controlado com fake timers. O primeiro bloco usa
+// fireEvent, síncrono, com controle exato do relógio. O user-event também
+// funciona com os fake timers do Vitest (último bloco): shouldAdvanceTime faz o
+// relógio andar com o tempo real e dispara o setTimeout(0) que o Testing
+// Library espera depois de cada interação (sem ele, o teste trava), e
+// advanceTimers deixa o user-event adiantar o relógio nas próprias pausas.
 afterEach(() => {
   vi.useRealTimers()
 })
@@ -34,6 +33,10 @@ function advance(ms: number) {
 }
 
 describe('SearchField', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
   it('busca uma única vez, 400 ms depois da última mudança', () => {
     const { onSearch, type } = setup()
 
@@ -77,5 +80,23 @@ describe('SearchField', () => {
     advance(SEARCH_DEBOUNCE_MS)
 
     expect(onSearch).not.toHaveBeenCalled()
+  })
+})
+
+describe('SearchField com user-event e fake timers', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+  })
+
+  it('digitar busca uma única vez, depois do debounce', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    const { onSearch, input } = setup()
+
+    await user.type(input, 'phone')
+    advance(SEARCH_DEBOUNCE_MS)
+
+    expect(input).toHaveValue('phone')
+    expect(onSearch).toHaveBeenCalledOnce()
+    expect(onSearch).toHaveBeenCalledWith('phone')
   })
 })
