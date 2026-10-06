@@ -69,6 +69,35 @@ function requestLabel(route: Route): string {
   return `${route.request().method()} ${route.request().url()}`
 }
 
+function isTestAccount(body: unknown): boolean {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'username' in body &&
+    'password' in body &&
+    body.username === 'emilys' &&
+    body.password === 'emilyspass'
+  )
+}
+
+// POST da DummyJSON. O login aceita a conta pública de teste e responde com a
+// fixture, cujo token é sintético e vence em 2100 (D26); as outras credenciais
+// recebem 400, como na API.
+function handlePost(route: Route, unhandled: string[]): Promise<void> {
+  const request = route.request()
+  const { pathname } = new URL(request.url())
+  const body: unknown = request.postDataJSON()
+
+  if (pathname === '/auth/login') {
+    return isTestAccount(body)
+      ? fulfillJson(route, fixtures.login)
+      : fulfillJson(route, { message: 'Invalid credentials' }, 400)
+  }
+
+  unhandled.push(requestLabel(route))
+  return fulfillJson(route, { message: `Rota não mockada: ${pathname}` }, 404)
+}
+
 // Responde como a DummyJSON. Rota ou método sem mock entra em unhandled (e
 // responde 404 ou 405), para a fixture falhar o teste.
 function handleApi(route: Route, unhandled: string[]): Promise<void> {
@@ -76,6 +105,9 @@ function handleApi(route: Route, unhandled: string[]): Promise<void> {
   const url = new URL(request.url())
   const { pathname } = url
 
+  if (request.method() === 'POST') {
+    return handlePost(route, unhandled)
+  }
   if (request.method() !== 'GET') {
     unhandled.push(requestLabel(route))
     return fulfillJson(

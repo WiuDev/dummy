@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { loginResponseSchema } from '../../src/schemas/auth.ts'
 import {
   categoriesSchema,
   productSchema,
@@ -26,4 +27,5 @@ export const fixtures = {
   ),
   categories: categoriesSchema.parse(readFixture('categories.json')),
   product1: productSchema.parse(readFixture('product-1.json')),
+  login: loginResponseSchema.parse(readFixture('login.json')),
 }
