@@ -11,4 +11,8 @@ describe('paths', () => {
     expect(paths.productPattern).toBe('/produtos/:id')
     expect(paths.home).toBe('/')
   })
+
+  it('tem o caminho do carrinho', () => {
+    expect(paths.cart).toBe('/carrinho')
+  })
 })

@@ -1,8 +1,9 @@
-import { screen, within } from '@testing-library/react'
+import { notifications } from '@mantine/notifications'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import product1Fixture from '@/test/fixtures/product-1.json'
 import { LocationDisplay } from '@/test/location'
 import { API_URL } from '@/test/msw/handlers'
@@ -25,6 +26,12 @@ function renderDetails(initialEntries: readonly string[]) {
 }
 
 const address = () => screen.getByLabelText('Endereço atual')
+
+afterEach(() => {
+  act(() => {
+    notifications.clean()
+  })
+})
 
 describe('ProductDetailsPage', () => {
   it('mostra o produto: galeria, preço, nota, estoque, informações e avaliações', async () => {
@@ -58,6 +65,20 @@ describe('ProductDetailsPage', () => {
     })
     expect(within(reviews).getAllByRole('listitem')).toHaveLength(3)
     expect(document.title).toBe('Essence Mascara Lash Princess · Loja Dummy')
+  })
+
+  it('adiciona o produto ao carrinho', async () => {
+    const user = userEvent.setup()
+    renderDetails(['/produtos/1'])
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Adicionar ao carrinho' }),
+    )
+
+    expect(
+      await screen.findByText('1 unidade de Essence Mascara Lash Princess.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/^1 unidade no carrinho\./)).toBeInTheDocument()
   })
 
   it('com id inválido, avisa que o produto não existe sem chamar a API', () => {
@@ -155,6 +176,9 @@ describe('ProductDetailsPage', () => {
     expect(screen.getByText('beauty')).toBeInTheDocument()
     expect(screen.getByText('Esgotado')).toBeInTheDocument()
     expect(screen.queryByText(/unidades?$/)).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: 'Adicionar ao carrinho' }),
+    ).toBeNull()
     expect(screen.getByText('(1 avaliação)')).toBeInTheDocument()
     expect(screen.queryByText('mascara')).toBeNull()
   })
