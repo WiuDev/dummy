@@ -55,6 +55,18 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('main')).toHaveTextContent('Itens locais: 0')
   })
 
+  it('no celular, o menu traz o usuário e o Ver a loja', () => {
+    renderLayout()
+
+    const navbar = screen.getByRole('navigation', {
+      name: 'Navegação do admin',
+    })
+    expect(within(navbar).getByText('Emily')).toBeInTheDocument()
+    expect(
+      within(navbar).getByRole('link', { name: 'Ver a loja' }),
+    ).toHaveAttribute('href', '/produtos')
+  })
+
   it('recolhe a navbar no desktop e a abre pelo Burger no celular', async () => {
     const user = userEvent.setup()
     renderLayout()
