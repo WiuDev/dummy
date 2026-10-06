@@ -6,7 +6,7 @@ import {
   type RenderResult,
 } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
-import { MemoryRouter } from 'react-router'
+import { type InitialEntry, MemoryRouter } from 'react-router'
 import { theme } from '@/app/theme'
 import { AuthProvider } from '@/features/auth'
 import { CartProvider } from '@/features/cart'
@@ -21,8 +21,9 @@ export interface RenderWithProvidersOptions extends Omit<
 > {
   readonly route?: string
   // Histórico inicial, para simular a navegação anterior; a última entrada é a
-  // rota atual. Quando informado, substitui o route.
-  readonly initialEntries?: readonly string[]
+  // rota atual. Uma entrada pode ser um objeto com state (ex.: o from do
+  // login). Quando informado, substitui o route.
+  readonly initialEntries?: readonly InitialEntry[]
   // Itens já no carrinho: gravados no storage do jsdom (em memória e limpo
   // depois de cada teste) antes de montar o CartProvider.
   readonly cartItems?: readonly CartItem[]

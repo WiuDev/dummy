@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router'
+import { LoginPage } from '@/features/auth'
 import { CartPage } from '@/features/cart'
 import { ProductDetailsPage, ProductsPage } from '@/features/catalog'
 import { PublicLayout } from '@/layouts/PublicLayout'
@@ -15,6 +16,7 @@ export function AppRoutes() {
         <Route path={paths.products} element={<ProductsPage />} />
         <Route path={paths.productPattern} element={<ProductDetailsPage />} />
         <Route path={paths.cart} element={<CartPage />} />
+        <Route path={paths.login} element={<LoginPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
