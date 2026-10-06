@@ -8,4 +8,8 @@ export const paths = {
   cart: '/carrinho',
   login: '/login',
   admin: '/admin',
+  adminProducts: '/admin/produtos',
+  adminProductNew: '/admin/produtos/novo',
+  adminProductEditPattern: '/admin/produtos/:id/editar',
+  adminProductEdit: (id: number): string => `/admin/produtos/${id}/editar`,
 } as const

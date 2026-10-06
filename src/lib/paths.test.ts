@@ -17,4 +17,11 @@ describe('paths', () => {
     expect(paths.login).toBe('/login')
     expect(paths.admin).toBe('/admin')
   })
+
+  it('monta os caminhos da gestão de produtos sob /admin', () => {
+    expect(paths.adminProducts).toBe('/admin/produtos')
+    expect(paths.adminProductNew).toBe('/admin/produtos/novo')
+    expect(paths.adminProductEditPattern).toBe('/admin/produtos/:id/editar')
+    expect(paths.adminProductEdit(10_000)).toBe('/admin/produtos/10000/editar')
+  })
 })

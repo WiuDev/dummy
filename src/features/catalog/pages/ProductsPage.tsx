@@ -1,16 +1,9 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Group,
-  Pagination,
-  Stack,
-  Text,
-} from '@mantine/core'
+import { Box, Button, Flex, Stack, Text } from '@mantine/core'
 import { Navigate, useLocation } from 'react-router'
 import { AsyncContent } from '@/components/AsyncContent'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
+import { PaginationNav } from '@/components/PaginationNav'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { CategorySelect } from '../components/CategorySelect'
 import { ProductGrid } from '../components/ProductGrid'
@@ -19,13 +12,6 @@ import { SearchField } from '../components/SearchField'
 import { useCatalogParams } from '../hooks/useCatalogParams'
 import { useCategories } from '../hooks/useCategories'
 import { useProducts } from '../hooks/useProducts'
-
-const PAGINATION_CONTROL_LABELS = {
-  first: 'Primeira página',
-  previous: 'Página anterior',
-  next: 'Próxima página',
-  last: 'Última página',
-} as const
 
 function countLabel(total: number): string {
   if (total === 0) {
@@ -123,19 +109,11 @@ export function ProductsPage() {
             <Stack gap="lg">
               <ProductGrid products={page.products} />
               {page.pageCount > 1 ? (
-                <Group component="nav" aria-label="Paginação" justify="center">
-                  <Pagination
-                    total={page.pageCount}
-                    value={page.page}
-                    onChange={setPage}
-                    getItemProps={(pageNumber) => ({
-                      'aria-label': `Página ${pageNumber}`,
-                    })}
-                    getControlProps={(control) => ({
-                      'aria-label': PAGINATION_CONTROL_LABELS[control],
-                    })}
-                  />
-                </Group>
+                <PaginationNav
+                  total={page.pageCount}
+                  value={page.page}
+                  onChange={setPage}
+                />
               ) : null}
             </Stack>
           )
