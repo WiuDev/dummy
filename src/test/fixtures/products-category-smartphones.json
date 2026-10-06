@@ -1,0 +1,31 @@
+{
+  "products": [
+    {
+      "id": 121,
+      "title": "iPhone 5s",
+      "price": 199.99,
+      "discountPercentage": 12.91,
+      "rating": 2.83,
+      "stock": 25,
+      "thumbnail": "https://cdn.dummyjson.com/product-images/smartphones/iphone-5s/thumbnail.webp",
+      "category": "smartphones",
+      "brand": "Apple",
+      "availabilityStatus": "In Stock"
+    },
+    {
+      "id": 122,
+      "title": "iPhone 6",
+      "price": 299.99,
+      "discountPercentage": 6.69,
+      "rating": 3.41,
+      "stock": 60,
+      "thumbnail": "https://cdn.dummyjson.com/product-images/smartphones/iphone-6/thumbnail.webp",
+      "category": "smartphones",
+      "brand": "Apple",
+      "availabilityStatus": "In Stock"
+    }
+  ],
+  "total": 16,
+  "skip": 0,
+  "limit": 2
+}
