@@ -73,7 +73,12 @@ describe('leitura pública', () => {
       skip: '0',
       select: SUMMARY_SELECT,
     })
-    expect(page).toEqual(searchPhoneFixture)
+    expect(page).toEqual({
+      products: searchPhoneFixture.products.slice(0, 2),
+      total: 23,
+      skip: 0,
+      limit: 2,
+    })
   })
 
   it('lista por categoria', async () => {
