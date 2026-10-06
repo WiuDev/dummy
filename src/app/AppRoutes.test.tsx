@@ -110,6 +110,20 @@ describe('AppRoutes', () => {
     ).toBeInTheDocument()
   })
 
+  it('da tabela, Novo produto abre o formulário, também sob demanda', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AppRoutes />, {
+      route: '/admin/produtos',
+      session: activeSession(),
+    })
+
+    await user.click(await screen.findByRole('link', { name: 'Novo produto' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Novo produto' }),
+    ).toBeInTheDocument()
+  })
+
   it('uma rota desconhecida do admin mostra a página não encontrada no layout do admin', async () => {
     renderWithProviders(<AppRoutes />, {
       route: '/admin/qualquer-coisa',

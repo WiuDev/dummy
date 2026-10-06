@@ -5,6 +5,7 @@ import type {
   DeletedProductEntry,
 } from '@/schemas/admin'
 import type {
+  Product,
   ProductMutationResponse,
   ProductsPage,
   ProductSummary,
@@ -49,6 +50,22 @@ export interface AdminProductsView {
 
 export function isLocalId(id: number): boolean {
   return id >= LOCAL_ID_START
+}
+
+// Produto completo do servidor (GET /auth/products/:id) → produto do admin.
+export function toAdminProduct(product: Product): AdminProduct {
+  return {
+    id: product.id,
+    title: product.title,
+    description: product.description,
+    category: product.category,
+    price: product.price,
+    discountPercentage: product.discountPercentage,
+    stock: product.stock,
+    brand: product.brand,
+    tags: product.tags,
+    thumbnail: product.thumbnail,
+  }
 }
 
 // Como a busca da API: o título ou a descrição contém o termo, sem diferenciar

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { EMPTY_ADMIN_OVERLAY } from '@/lib/admin-overlay'
 import type { AdminOverlay } from '@/schemas/admin'
+import { productSchema } from '@/schemas/product'
+import product1Fixture from '@/test/fixtures/product-1.json'
 import productUpdateFixture from '@/test/fixtures/product-update.json'
 import { lampFields, listPage, mascaraAdmin, phoneSearch } from '@/test/admin'
 import {
@@ -14,6 +16,7 @@ import {
   recordCreated,
   recordDeleted,
   recordUpdated,
+  toAdminProduct,
 } from './overlay-state'
 
 // Congela o overlay inteiro: qualquer mutação lançaria TypeError, porque os
@@ -218,6 +221,14 @@ describe('registro das alterações', () => {
       description: productUpdateFixture.description,
       thumbnail: productUpdateFixture.thumbnail,
     })
+  })
+})
+
+describe('toAdminProduct', () => {
+  it('guarda do produto completo só os campos do admin', () => {
+    expect(toAdminProduct(productSchema.parse(product1Fixture))).toEqual(
+      mascaraAdmin,
+    )
   })
 })
 

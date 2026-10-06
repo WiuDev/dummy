@@ -21,6 +21,11 @@ const AdminProductsPage = lazy(() =>
     default: module.AdminProductsPage,
   })),
 )
+const ProductFormPage = lazy(() =>
+  import('@/features/admin-products').then((module) => ({
+    default: module.ProductFormPage,
+  })),
+)
 
 function AdminLoader() {
   return (
@@ -58,6 +63,11 @@ export function AppRoutes() {
             element={<Navigate to={paths.adminProducts} replace />}
           />
           <Route path={paths.adminProducts} element={<AdminProductsPage />} />
+          <Route path={paths.adminProductNew} element={<ProductFormPage />} />
+          <Route
+            path={paths.adminProductEditPattern}
+            element={<ProductFormPage />}
+          />
           <Route path={`${paths.admin}/*`} element={<NotFoundPage />} />
         </Route>
       </Route>
