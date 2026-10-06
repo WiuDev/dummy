@@ -63,6 +63,17 @@ describe('AddToCartForm', () => {
     expect(addButton()).toBeDisabled()
   })
 
+  it('Enter com o campo vazio não adiciona nada', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AddToCartForm product={mascaraProduct} />)
+
+    await user.clear(quantityInput())
+    await user.type(quantityInput(), '{Enter}')
+
+    expect(addButton()).toBeDisabled()
+    expect(readCartItems()).toEqual([])
+  })
+
   it('produto esgotado não tem o que comprar', () => {
     renderWithProviders(
       <AddToCartForm product={{ ...mascaraProduct, stock: 0 }} />,

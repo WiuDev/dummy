@@ -72,13 +72,23 @@ describe('CartPage', () => {
 
     await user.clear(quantityOf('Essence Mascara Lash Princess'))
     await user.type(quantityOf('Essence Mascara Lash Princess'), '3')
+    await user.tab()
 
+    expect(quantityOf('Essence Mascara Lash Princess')).toHaveValue('3')
     expect(screen.getByText('4 itens')).toBeInTheDocument()
     expect(summary()).toHaveTextContent('TotalUS$ 43,17')
     expect(readCartItems()).toEqual([
       { ...mascaraItem, quantity: 3 },
       paletteItem,
     ])
+  })
+
+  it('sem desconto, o resumo não mostra a linha de descontos', () => {
+    renderCart([{ ...paletteItem, discountPercentage: 0 }])
+
+    expect(summary()).toHaveTextContent('SubtotalUS$ 19,99')
+    expect(summary()).not.toHaveTextContent('Descontos')
+    expect(summary()).toHaveTextContent('TotalUS$ 19,99')
   })
 
   it('apagar o número não muda o carrinho e, ao sair do campo, ele volta', async () => {
