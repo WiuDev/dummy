@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it } from 'vitest'
+import product1Fixture from '@/test/fixtures/product-1.json'
 import { LocationDisplay } from '@/test/location'
 import { API_URL } from '@/test/msw/handlers'
 import { recordRequests } from '@/test/msw/requests'
@@ -130,5 +131,31 @@ describe('ProductDetailsPage', () => {
 
     expect(address()).toHaveTextContent(/^\/produtos$/)
     expect(screen.getByText('Catálogo')).toBeInTheDocument()
+  })
+
+  it('sem marca, esgotado, com uma avaliação e sem tags', async () => {
+    server.use(
+      http.get(`${API_URL}/products/1`, () =>
+        HttpResponse.json({
+          ...product1Fixture,
+          brand: undefined,
+          stock: 0,
+          availabilityStatus: 'Out of Stock',
+          tags: [],
+          reviews: product1Fixture.reviews.slice(0, 1),
+        }),
+      ),
+    )
+    renderDetails(['/produtos/1'])
+
+    await screen.findByRole('heading', {
+      level: 1,
+      name: 'Essence Mascara Lash Princess',
+    })
+    expect(screen.getByText('beauty')).toBeInTheDocument()
+    expect(screen.getByText('Esgotado')).toBeInTheDocument()
+    expect(screen.queryByText(/unidades?$/)).toBeNull()
+    expect(screen.getByText('(1 avaliação)')).toBeInTheDocument()
+    expect(screen.queryByText('mascara')).toBeNull()
   })
 })
