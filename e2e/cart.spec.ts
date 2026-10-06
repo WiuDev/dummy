@@ -63,6 +63,10 @@ test.describe('carrinho', () => {
       .click()
 
     await expect(cartItems).toHaveCount(1)
+    // O foco não se perde com a linha removida: vai para o item que ficou.
+    await expect(
+      cartItems.getByRole('link', { name: 'Essence Mascara Lash Princess' }),
+    ).toBeFocused()
     await expect(
       nav.getByRole('link', { name: 'Carrinho, 3 itens' }),
     ).toBeVisible()
