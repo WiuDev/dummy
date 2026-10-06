@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router'
+import { CartPage } from '@/features/cart'
 import { ProductDetailsPage, ProductsPage } from '@/features/catalog'
 import { PublicLayout } from '@/layouts/PublicLayout'
 import { paths } from '@/lib/paths'
@@ -13,6 +14,7 @@ export function AppRoutes() {
         <Route index element={<Navigate to={paths.products} replace />} />
         <Route path={paths.products} element={<ProductsPage />} />
         <Route path={paths.productPattern} element={<ProductDetailsPage />} />
+        <Route path={paths.cart} element={<CartPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
