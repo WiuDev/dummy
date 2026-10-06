@@ -1,27 +1,49 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route, Routes } from 'react-router'
+import { Route, Routes, useLocation } from 'react-router'
 import { describe, expect, it } from 'vitest'
+import { readSession } from '@/lib/auth-session'
+import { redirectTarget } from '@/lib/redirect'
+import { RequireAuth } from '@/routes/RequireAuth'
+import type { AuthSession } from '@/schemas/auth'
 import type { CartItem } from '@/schemas/cart'
 import { mascaraItem, paletteItem } from '@/test/cart'
+import { LocationDisplay } from '@/test/location'
 import { renderWithProviders } from '@/test/render'
+import { activeSession } from '@/test/session'
 import { PublicLayout } from './PublicLayout'
+
+// No lugar do login: mostra para onde ele voltaria.
+function LoginProbe() {
+  const location = useLocation()
+  return <p>Login, depois {redirectTarget(location.state)}</p>
+}
 
 function renderLayout(
   route = '/produtos',
   cartItems: readonly CartItem[] = [],
+  session?: AuthSession,
 ) {
   return renderWithProviders(
-    <Routes>
-      <Route element={<PublicLayout />}>
-        <Route path="/produtos" element={<p>Lista de produtos</p>} />
-        <Route path="/produtos/:id" element={<p>Detalhe do produto</p>} />
-        <Route path="/carrinho" element={<p>Itens do carrinho</p>} />
-      </Route>
-    </Routes>,
-    { route, cartItems },
+    <>
+      <Routes>
+        <Route element={<PublicLayout />}>
+          <Route path="/produtos" element={<p>Lista de produtos</p>} />
+          <Route path="/produtos/:id" element={<p>Detalhe do produto</p>} />
+          <Route path="/carrinho" element={<p>Itens do carrinho</p>} />
+          <Route path="/login" element={<LoginProbe />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/admin" element={<p>Área administrativa</p>} />
+          </Route>
+        </Route>
+      </Routes>
+      <LocationDisplay />
+    </>,
+    { route, cartItems, ...(session === undefined ? {} : { session }) },
   )
 }
+
+const address = () => screen.getByLabelText('Endereço atual')
 
 const headerNav = () =>
   within(screen.getByRole('banner')).getByRole('navigation', {
@@ -147,5 +169,71 @@ describe('PublicLayout', () => {
     expect(
       within(headerNav()).getByRole('link', { name: 'Carrinho, 1 item' }),
     ).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('visitante vê Entrar, que volta depois para a página atual', async () => {
+    const user = userEvent.setup()
+    renderLayout('/produtos/1')
+
+    expect(within(headerNav()).queryByText('Admin')).toBeNull()
+    await user.click(within(headerNav()).getByRole('link', { name: 'Entrar' }))
+
+    expect(screen.getByText('Login, depois /produtos/1')).toBeInTheDocument()
+  })
+
+  it('logado, vê Admin, o primeiro nome e Sair', () => {
+    renderLayout('/produtos', [], activeSession())
+
+    const nav = headerNav()
+    expect(within(nav).getByRole('link', { name: 'Admin' })).toHaveAttribute(
+      'href',
+      '/admin',
+    )
+    expect(within(nav).getByText('Emily')).toBeInTheDocument()
+    expect(
+      within(nav).getByRole('button', { name: 'Sair' }),
+    ).toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Entrar' })).toBeNull()
+  })
+
+  it('o Sair numa página pública fica nela, como visitante', async () => {
+    const user = userEvent.setup()
+    renderLayout('/carrinho', [], activeSession())
+
+    await user.click(within(headerNav()).getByRole('button', { name: 'Sair' }))
+
+    expect(address()).toHaveTextContent(/^\/carrinho$/)
+    expect(
+      within(headerNav()).getByRole('link', { name: 'Entrar' }),
+    ).toBeInTheDocument()
+    expect(readSession()).toBeNull()
+  })
+
+  it('o Sair na área administrativa leva ao catálogo, não ao login', async () => {
+    const user = userEvent.setup()
+    renderLayout('/admin', [], activeSession())
+    expect(screen.getByRole('main')).toHaveTextContent('Área administrativa')
+
+    await user.click(within(headerNav()).getByRole('button', { name: 'Sair' }))
+
+    expect(address()).toHaveTextContent(/^\/produtos$/)
+    expect(screen.getByRole('main')).toHaveTextContent('Lista de produtos')
+  })
+
+  it('no menu mobile, os itens da conta também aparecem e o Sair fecha o menu', async () => {
+    const user = userEvent.setup()
+    renderLayout('/produtos', [], activeSession())
+
+    await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+    const drawer = screen.getByRole('dialog', { name: 'Menu' })
+    expect(
+      within(drawer).getByRole('link', { name: 'Admin' }),
+    ).toBeInTheDocument()
+    await user.click(within(drawer).getByRole('button', { name: 'Sair' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(
+      within(headerNav()).getByRole('link', { name: 'Entrar' }),
+    ).toBeInTheDocument()
   })
 })
