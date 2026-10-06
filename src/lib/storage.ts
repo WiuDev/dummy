@@ -34,6 +34,7 @@ export function createMemoryStorage(): StorageLike {
 }
 
 const memoryStorage = createMemoryStorage()
+const sessionMemoryStorage = createMemoryStorage()
 
 // Usa o localStorage e, se o navegador bloquear o acesso (ex.: armazenamento
 // desativado), guarda os dados em memória até a página ser fechada.
@@ -42,6 +43,15 @@ export function getBrowserStorage(): StorageLike {
     return window.localStorage
   } catch {
     return memoryStorage
+  }
+}
+
+// O mesmo para o sessionStorage, que vale só na aba (ex.: o overlay do admin).
+export function getSessionStorage(): StorageLike {
+  try {
+    return window.sessionStorage
+  } catch {
+    return sessionMemoryStorage
   }
 }
 
