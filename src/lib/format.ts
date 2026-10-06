@@ -26,6 +26,20 @@ export function formatCurrency(value: number): string {
   return currencyFormatter.format(value)
 }
 
+// Valor em centavos inteiros (os totais do carrinho), formatado como moeda.
+export function formatCents(cents: number): string {
+  return currencyFormatter.format(cents / 100)
+}
+
+// Contagem com o substantivo no singular ou no plural ("1 item", "3 itens").
+export function formatCount(
+  count: number,
+  singular: string,
+  plural: string,
+): string {
+  return `${count} ${count === 1 ? singular : plural}`
+}
+
 // Recebe o percentual como a API manda (10.48 para 10,48%).
 export function formatPercent(value: number): string {
   return percentFormatter.format(value / 100)

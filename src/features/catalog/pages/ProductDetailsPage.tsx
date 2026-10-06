@@ -16,8 +16,9 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { AsyncContent } from '@/components/AsyncContent'
 import { EmptyState } from '@/components/EmptyState'
 import { Price } from '@/components/Price'
+import { AddToCartForm } from '@/features/cart'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { formatRating } from '@/lib/format'
+import { formatCount, formatRating } from '@/lib/format'
 import { paths } from '@/lib/paths'
 import { productIdParamSchema } from '@/schemas/catalog'
 import type { Product } from '@/schemas/product'
@@ -25,10 +26,6 @@ import { ProductGallery } from '../components/ProductGallery'
 import { ReviewList } from '../components/ReviewList'
 import { StockBadge } from '../components/StockBadge'
 import { useProduct } from '../hooks/useProduct'
-
-function pluralize(count: number, singular: string, plural: string): string {
-  return `${count} ${count === 1 ? singular : plural}`
-}
 
 function ProductDetailsSkeleton() {
   return (
@@ -88,7 +85,9 @@ function ProductDetails({ product }: { readonly product: Product }) {
                 <VisuallyHidden> de 5</VisuallyHidden>
               </Text>
               <Text size="sm" c="dimmed">
-                ({pluralize(product.reviews.length, 'avaliação', 'avaliações')})
+                (
+                {formatCount(product.reviews.length, 'avaliação', 'avaliações')}
+                )
               </Text>
             </Group>
             <Price
@@ -103,10 +102,11 @@ function ProductDetails({ product }: { readonly product: Product }) {
               />
               {product.stock > 0 ? (
                 <Text size="sm" c="dimmed">
-                  {pluralize(product.stock, 'unidade', 'unidades')}
+                  {formatCount(product.stock, 'unidade', 'unidades')}
                 </Text>
               ) : null}
             </Group>
+            <AddToCartForm product={product} />
             <Text>{product.description}</Text>
             <List size="sm" spacing={4}>
               <List.Item>Garantia: {product.warrantyInformation}</List.Item>

@@ -8,6 +8,9 @@ import {
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { theme } from '@/app/theme'
+import { CartProvider } from '@/features/cart'
+import { writeCartItems } from '@/lib/cart-storage'
+import type { CartItem } from '@/schemas/cart'
 
 export interface RenderWithProvidersOptions extends Omit<
   RenderOptions,
@@ -17,15 +20,26 @@ export interface RenderWithProvidersOptions extends Omit<
   // Histórico inicial, para simular a navegação anterior; a última entrada é a
   // rota atual. Quando informado, substitui o route.
   readonly initialEntries?: readonly string[]
+  // Itens já no carrinho: gravados no storage do jsdom (em memória e limpo
+  // depois de cada teste) antes de montar o CartProvider.
+  readonly cartItems?: readonly CartItem[]
 }
 
 // Envolve o componente nos providers da aplicação: Mantine em modo de teste
-// (sem transições nem portais), notificações e roteador em memória.
+// (sem transições nem portais), notificações, roteador em memória e carrinho.
 export function renderWithProviders(
   ui: ReactElement,
-  { route = '/', initialEntries, ...options }: RenderWithProvidersOptions = {},
+  {
+    route = '/',
+    initialEntries,
+    cartItems,
+    ...options
+  }: RenderWithProvidersOptions = {},
 ): RenderResult {
   const entries = initialEntries ?? [route]
+  if (cartItems !== undefined) {
+    writeCartItems(cartItems)
+  }
 
   function Providers({ children }: { readonly children: ReactNode }) {
     return (
@@ -35,7 +49,7 @@ export function renderWithProviders(
           initialEntries={[...entries]}
           initialIndex={entries.length - 1}
         >
-          {children}
+          <CartProvider>{children}</CartProvider>
         </MemoryRouter>
       </MantineProvider>
     )

@@ -1,4 +1,32 @@
 import { z } from 'zod'
+import { productSchema } from './product'
+
+// Item do carrinho salvo no navegador: os dados do produto quando ele entrou no
+// carrinho e a quantidade, que nunca passa do estoque.
+export const cartItemSchema = productSchema
+  .pick({
+    id: true,
+    title: true,
+    price: true,
+    discountPercentage: true,
+    stock: true,
+    thumbnail: true,
+  })
+  .extend({ quantity: z.number().int().positive() })
+  .refine((item) => item.quantity <= item.stock, {
+    message: 'A quantidade passa do estoque.',
+  })
+
+// Carrinho salvo (chave dummy:cart:v1), sem produto repetido.
+export const storedCartSchema = z.object({
+  version: z.literal(1),
+  items: z
+    .array(cartItemSchema)
+    .refine(
+      (items) => new Set(items.map((item) => item.id)).size === items.length,
+      { message: 'Produto repetido no carrinho.' },
+    ),
+})
 
 export const checkoutRequestSchema = z.object({
   userId: z.number().int().positive(),
@@ -34,6 +62,8 @@ export const cartResponseSchema = z.object({
   totalQuantity: z.number().int().nonnegative(),
 })
 
+export type CartItem = z.infer<typeof cartItemSchema>
+export type StoredCart = z.infer<typeof storedCartSchema>
 export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>
 export type CartItemResponse = z.infer<typeof cartItemResponseSchema>
 export type CartResponse = z.infer<typeof cartResponseSchema>

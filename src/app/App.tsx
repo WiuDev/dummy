@@ -2,6 +2,7 @@ import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import { MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
+import { CartProvider } from '@/features/cart'
 import { AppRoutes } from './AppRoutes'
 import { HttpErrorNotifier } from './HttpErrorNotifier'
 import { ScrollToTop } from './ScrollToTop'
@@ -16,7 +17,9 @@ export function App() {
       <Notifications />
       <HttpErrorNotifier />
       <ScrollToTop searchParams={SCROLL_TO_TOP_PARAMS} />
-      <AppRoutes />
+      <CartProvider>
+        <AppRoutes />
+      </CartProvider>
     </MantineProvider>
   )
 }

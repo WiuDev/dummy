@@ -2,20 +2,31 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it } from 'vitest'
+import type { CartItem } from '@/schemas/cart'
+import { mascaraItem, paletteItem } from '@/test/cart'
 import { renderWithProviders } from '@/test/render'
 import { PublicLayout } from './PublicLayout'
 
-function renderLayout(route = '/produtos') {
+function renderLayout(
+  route = '/produtos',
+  cartItems: readonly CartItem[] = [],
+) {
   return renderWithProviders(
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/produtos" element={<p>Lista de produtos</p>} />
         <Route path="/produtos/:id" element={<p>Detalhe do produto</p>} />
+        <Route path="/carrinho" element={<p>Itens do carrinho</p>} />
       </Route>
     </Routes>,
-    { route },
+    { route, cartItems },
   )
 }
+
+const headerNav = () =>
+  within(screen.getByRole('banner')).getByRole('navigation', {
+    name: 'Navegação principal',
+  })
 
 // No jsdom o CSS do Mantine não é aplicado, então a navegação de desktop e o
 // Burger do mobile aparecem juntos; o Drawer só existe quando aberto.
@@ -89,5 +100,52 @@ describe('PublicLayout', () => {
     await user.keyboard('{Escape}')
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('mostra no link do carrinho a soma das quantidades', () => {
+    renderLayout('/produtos', [{ ...mascaraItem, quantity: 2 }, paletteItem])
+
+    const cartLink = within(headerNav()).getByRole('link', {
+      name: 'Carrinho, 3 itens',
+    })
+    expect(cartLink).toHaveAttribute('href', '/carrinho')
+    expect(within(cartLink).getByText('3')).toBeInTheDocument()
+  })
+
+  it('com o carrinho vazio, o link não tem contador', () => {
+    renderLayout()
+
+    expect(
+      within(headerNav()).getByRole('link', { name: 'Carrinho' }),
+    ).toBeInTheDocument()
+  })
+
+  it('limita o contador visível a 99+', () => {
+    renderLayout('/produtos', [
+      { ...mascaraItem, quantity: 99 },
+      { ...paletteItem, quantity: 34 },
+    ])
+
+    const cartLink = within(headerNav()).getByRole('link', {
+      name: 'Carrinho, 133 itens',
+    })
+    expect(within(cartLink).getByText('99+')).toBeInTheDocument()
+  })
+
+  it('no menu mobile, o carrinho também tem contador e fecha o menu', async () => {
+    const user = userEvent.setup()
+    renderLayout('/produtos', [mascaraItem])
+
+    await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+    const drawer = screen.getByRole('dialog', { name: 'Menu' })
+    await user.click(
+      within(drawer).getByRole('link', { name: 'Carrinho, 1 item' }),
+    )
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('main')).toHaveTextContent('Itens do carrinho')
+    expect(
+      within(headerNav()).getByRole('link', { name: 'Carrinho, 1 item' }),
+    ).toHaveAttribute('aria-current', 'page')
   })
 })

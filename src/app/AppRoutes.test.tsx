@@ -52,6 +52,24 @@ describe('AppRoutes', () => {
     ).toBeInTheDocument()
   })
 
+  it('o link do cabeçalho leva ao carrinho, dentro do layout', async () => {
+    const user = userEvent.setup()
+    renderRoute('/produtos')
+
+    await user.click(
+      within(screen.getByRole('banner')).getByRole('link', {
+        name: 'Carrinho',
+      }),
+    )
+
+    expect(
+      within(screen.getByRole('main')).getByRole('heading', {
+        level: 1,
+        name: 'Carrinho',
+      }),
+    ).toBeInTheDocument()
+  })
+
   it('mostra a página não encontrada para rotas desconhecidas', async () => {
     const user = userEvent.setup()
     renderRoute('/rota-inexistente')
