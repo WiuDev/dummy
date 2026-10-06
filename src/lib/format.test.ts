@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { formatCurrency, formatDate, formatPercent } from './format'
 
+// O Intl separa o símbolo do valor com um espaço não separável (U+00A0).
+const NBSP = String.fromCharCode(0xa0)
+
 describe('formatCurrency', () => {
   it.each([
-    [9.99, 'US$ 9,99'],
-    [1234.5, 'US$ 1.234,50'],
-    [0, 'US$ 0,00'],
+    [9.99, `US$${NBSP}9,99`],
+    [1234.5, `US$${NBSP}1.234,50`],
+    [0, `US$${NBSP}0,00`],
   ])('formata %s como %s', (value, expected) => {
     expect(formatCurrency(value)).toBe(expected)
   })
