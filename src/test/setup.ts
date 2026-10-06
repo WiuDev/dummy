@@ -12,6 +12,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup()
   server.resetHandlers()
+  server.events.removeAllListeners()
   window.localStorage.clear()
   window.sessionStorage.clear()
 })
