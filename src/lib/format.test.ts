@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { formatCurrency, formatDate, formatPercent } from './format'
+import {
+  formatCurrency,
+  formatDate,
+  formatPercent,
+  formatRating,
+} from './format'
 
 // O Intl separa o símbolo do valor com um espaço não separável (U+00A0).
 const NBSP = String.fromCharCode(0xa0)
@@ -20,6 +25,16 @@ describe('formatPercent', () => {
     [99.6, '100%'],
   ])('formata %s como %s', (value, expected) => {
     expect(formatPercent(value)).toBe(expected)
+  })
+})
+
+describe('formatRating', () => {
+  it.each([
+    [2.56, '2,6'],
+    [4, '4,0'],
+    [4.99, '5,0'],
+  ])('formata a nota %s como %s', (value, expected) => {
+    expect(formatRating(value)).toBe(expected)
   })
 })
 

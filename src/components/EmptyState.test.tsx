@@ -27,7 +27,17 @@ describe('EmptyState', () => {
     renderWithProviders(<EmptyState title="Nada por aqui" />)
 
     expect(
-      screen.getByRole('heading', { name: 'Nada por aqui' }),
+      screen.getByRole('heading', { level: 2, name: 'Nada por aqui' }),
+    ).toBeInTheDocument()
+  })
+
+  it('pode ser o título principal da página', () => {
+    renderWithProviders(
+      <EmptyState title="Produto não encontrado" headingOrder={1} />,
+    )
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Produto não encontrado' }),
     ).toBeInTheDocument()
   })
 })

@@ -61,7 +61,7 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 
 | Camada                | Papel                                                                                                       | Pode importar                                                                                          | Não pode importar                                                                         |
 | --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `app/`                | Composição: providers, rotas, tema, `HttpErrorNotifier`                                                     | todas as camadas, features só pelo `index.ts`                                                          | `axios`, `@/test`, internos de features                                                   |
+| `app/`                | Composição: providers, rotas, tema, `HttpErrorNotifier`, `ScrollToTop`                                      | todas as camadas, features só pelo `index.ts`                                                          | `axios`, `@/test`, internos de features                                                   |
 | `layouts/`, `routes/` | AppShell, navegação persistente e guards                                                                    | components, hooks, lib, schemas, features pelo `index.ts`                                              | `@/app`, `@/services`, `axios`, `@/test`, internos de features                            |
 | `features/<nome>/`    | Domínio, em `components/`, `pages/`, `hooks/`, `context/` e `index.ts` (API pública)                        | components, hooks, lib, schemas, outras features pelo `index.ts`; services só em `hooks/` e `context/` | `axios`, `@/app`, `@/layouts`, `@/routes`, `@/test`, internos de outra feature, `../../`  |
 | `components/`         | UI apresentacional, com props tipadas e `children`                                                          | hooks, lib, schemas, React, Mantine, Tabler                                                            | features, services, app, layouts, routes, `axios`, `@/test`                               |
@@ -69,17 +69,18 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 | `services/`           | HTTP (`api.ts` é a instância do Axios), validação Zod, `toAppError` e eventos HTTP                          | lib, schemas, `axios`, `zod`                                                                           | React, Mantine, Tabler, features, components, hooks, app, layouts, routes, `@/test`       |
 | `schemas/`            | Schemas Zod e tipos via `z.infer`                                                                           | `zod` e outros schemas                                                                                 | qualquer outra camada, React, UI, `axios`                                                 |
 | `lib/`                | TypeScript puro: `errors.ts` (`AppError`), eventos, storage, JWT e sessão, `paths.ts` (rotas), formatadores | `zod`, schemas e lib                                                                                   | React, UI, `axios`, features, components, hooks, services, app, layouts, routes, `@/test` |
-| `test/`               | Utilitários de teste: MSW, fixtures, `renderWithProviders`, JWT e sessões de teste                          | tudo, exceto o que está ao lado                                                                        | `axios` (use MSW), internos de outras features                                            |
+| `test/`               | Utilitários de teste: MSW, fixtures, `renderWithProviders`, `LocationDisplay`, JWT e sessões de teste       | tudo, exceto o que está ao lado                                                                        | `axios` (use MSW), internos de outras features                                            |
 
 - Entre pastas, importe pelo alias `@/`. Imports relativos só dentro da própria pasta (`./`); dentro de uma feature, no máximo `../`. O `index.ts` de uma feature só reexporta `./`.
 - **Única exceção explícita:** `src/lib/forms/zodResolver.ts` pode importar `@mantine/form` (A2).
 - Arquivos de teste (`*.test.ts(x)` e `src/test/**`) podem importar `@/test`; `axios` e internos de outras features continuam proibidos.
 - Tudo isso é imposto por `no-restricted-imports` e `import/no-cycle` no `.oxlintrc.json`.
+- O E2E (`e2e/`) fica fora das camadas: de `src/` ele só importa os schemas, por caminho relativo com extensão `.ts` (o `tsconfig.node.json` usa `nodenext`), e lê as fixtures do disco (D45).
 
 ## Convenções de código
 
 - TypeScript estrito (`strict`, `noImplicitAny`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `noImplicitReturns`). `erasableSyntaxOnly` proíbe `enum`/`namespace`: use uniões e `as const`. Com `verbatimModuleSyntax`, use `import type`.
-- Dados externos (API, storage, URL, `location.state`) entram como `unknown` e são validados com Zod (`.safeParse`). Tipos de domínio vêm de `z.infer`.
+- Dados externos (API, storage, URL, `location.state`) entram como `unknown` e são validados com Zod: `.safeParse` quando a falha muda o fluxo (ex.: id inválido vira "não encontrado"), ou `.parse` com `.catch` quando há um valor padrão (ex.: parâmetros do catálogo na URL), que nunca lança. Tipos de domínio vêm de `z.infer`.
 - Componentes funcionais e exports nomeados; `export default` só onde a ferramenta exige (configs).
 - Nomes de arquivo:
   - Módulos que exportam um componente, hook ou função principal levam o nome dela (`ProductCard.tsx`, `useCart.ts`, `zodResolver.ts`).
@@ -94,13 +95,17 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 
 - HTTP nos testes só pelo MSW (`src/test/msw`): o servidor roda com `onUnhandledRequest: 'error'`, os handlers padrão cobrem o caminho feliz de cada endpoint com as fixtures e cada teste sobrescreve o que precisar com `server.use(...)`. Para conferir a requisição enviada, use `recordRequests` e `summarizeRequest`.
 - Fixtures em `src/test/fixtures`, capturadas da API e enxutas, com tokens sintéticos e sem dados sensíveis fictícios (D26). Sessões de teste em `src/test/session.ts` e JWTs em `src/test/jwt.ts`.
-- Fake timers só onde não há rede (debounce, expiração).
+- Fake timers só onde não há rede (debounce, expiração). O user-event funciona com os fake timers do Vitest se o relógio andar sozinho: `vi.useFakeTimers({ shouldAdvanceTime: true })` com `userEvent.setup({ advanceTimers: vi.advanceTimersByTime })`. Sem o `shouldAdvanceTime`, o `setTimeout(0)` que o Testing Library espera depois de cada interação nunca dispara e o teste trava; o `advanceTimers` evita a espera de cerca de 20 ms em cada passo. Para controlar o relógio com exatidão, use `fireEvent` e `act(() => { vi.advanceTimersByTime(ms) })`.
 - O interceptor XHR do MSW não dispara o `timeout` do jsdom enquanto o handler não responde; o tempo esgotado é testado com um adapter de teste que rejeita como o adapter XHR do axios (`code: 'ETIMEDOUT'`).
 - As notificações do Mantine têm estado global: limpe com `notifications.clean()` dentro de `act` depois de cada teste que as exibe.
-- Interações com `@testing-library/user-event` (`userEvent.setup()`) e consultas por papel e nome. Para testar páginas e rotas, `renderWithProviders(<AppRoutes />, { route })` monta o layout e as rotas reais num `MemoryRouter`.
+- Interações com `@testing-library/user-event` (`userEvent.setup()`) e consultas por papel e nome. Para testar páginas e rotas, `renderWithProviders(<AppRoutes />, { route })` monta o layout e as rotas reais num `MemoryRouter`; com `initialEntries`, o histórico começa com várias entradas, na última. Para conferir a URL, renderize o `LocationDisplay` (`src/test/location.tsx`), um `<output aria-label="Endereço atual">`.
+- O `getByText` só casa o texto do próprio elemento: com um `VisuallyHidden` dentro, confira o elemento pai com `toHaveTextContent`.
+- No `Select` do Mantine, o campo tem o papel `combobox` e as opções, `option`. O botão de limpar é `aria-hidden` e fica fora da tabulação: nos testes, ache-o com `{ hidden: true }`. Pelo teclado, escolher de novo a opção atual limpa a seleção (`allowDeselect`).
+- O jsdom não implementa `window.scrollTo`: o setup o troca por uma função vazia. Para conferir a rolagem, use `vi.spyOn(window, 'scrollTo')`.
 - As consultas do Testing Library normalizam espaços: o espaço não separável (U+00A0) que o `Intl` põe depois de `US$` vira um espaço comum. Em comparações exatas fora do DOM, use uma constante para o caractere, nunca o caractere literal.
 - No jsdom o CSS do Mantine não é aplicado: `hiddenFrom` e `visibleFrom` não escondem nada nos testes.
 - No Playwright, use `page.goto('produtos')`, sem barra inicial: o `baseURL` termina em `/dummy/`.
+- Os specs do Playwright importam `test` e `expect` de `e2e/support/test.ts`, nunca direto de `@playwright/test`: a fixture automática instala a API mockada em cada página, e uma requisição externa sem mock falha o teste (D45). Spec que depende dos dados das fixtures é pulado com `E2E_BASE_URL` (`test.skip(isDeployed, …)`). O smoke (`@smoke`) também roda contra a API real e por isso confere só a estrutura das páginas.
 - Cobertura com thresholds (D27): o `yarn verify` e o CI falham se ela cair.
 
 ## Commits e branches
@@ -169,7 +174,7 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 - **D21**: Dependências diretas com versão exata (o lockfile resolve a versão escolhida); `@types/node` segue em `~22.19.x`.
 - **D22**: As versões auditadas são mantidas. Só se troca por correção relevante, com nova auditoria de data e `engines`.
 - **D23**: Coverage, user-event, preset PostCSS do Mantine, notifications e ícones entram nas fases em que forem usados.
-- **D24**: A página temporária "Em construção" fica em `src/routes/` e sai no PR 3b da Fase 3.
+- **D24**: A página temporária "Em construção" ficou em `src/routes/` até o PR 3b da Fase 3, que a removeu ao ligar as páginas do catálogo.
 - **D25** (E1): O `HttpErrorNotifier` entra na Fase 2. Ele assina `httpErrorEvents` e mostra as falhas de rede, tempo esgotado, 5xx e 429 com `@mantine/notifications`, com um `id` por tipo de falha para não repetir a notificação.
 - **D26** (E2): Fixtures capturadas da API e enxutas, com tokens JWT sintéticos (assinatura falsa e `exp` em 2100 e 2101) e sem os dados sensíveis fictícios da DummyJSON (senha, documentos, banco, cripto).
 - **D27** (E3): Cobertura v8 com thresholds de 80/80/80/70 (linhas, statements, funções, branches) no geral e 90/90/90/85 em `lib`, `services`, `hooks` e `schemas`. O `yarn verify` e o CI rodam `test:coverage`.
@@ -187,8 +192,15 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 - **D39**: `useDocumentTitle` define o título da aba por página e o restaura no cleanup.
 - **D40**: O seletor de tema claro/escuro fica para a Fase 7.
 - **D41**: Na Fase 4, o carrinho usa `useState` com funções puras que atualizam com spread, no lugar do `useReducer` que a A3 permitia. Assim o requisito 2.1 já fica evidenciado na Fase 4, sem depender do overlay do admin.
-- **D42**: O smoke roda com a API mockada no CI (preview local) e contra a API real em produção, como verificação contínua da integração; o E2E do CI continua todo mockado. Implementado no PR 3b.
+- **D42**: O smoke roda com a API mockada no CI (preview local) e contra a API real em produção, como verificação contínua da integração; o E2E do CI continua todo mockado. Implementado no PR 3b: o smoke confere a estrutura das páginas, não os dados das fixtures.
 - **D43**: O `StockBadge` (PR 3b) mostra rótulos em pt-BR ("Em estoque", "Estoque baixo", "Esgotado"), não o texto em inglês da API. Nomes, descrições e avaliações seguem como vêm da API.
+- **D44** (C1): As respostas mockadas do E2E levam `Access-Control-Allow-Origin: *`. O spike do PR 3b mostrou que, no Playwright 1.63, o navegador aceita a resposta do `route.fulfill` sem cabeçalho CORS (GET 200 e POST 201) e que o próprio Playwright responde ao preflight, que nem chega à rota. Ou seja, o cabeçalho é opcional; ele fica por fidelidade à API real e para não depender desse comportamento.
+- **D45**: E2E mockado (`e2e/support/`). A DummyJSON responde com as mesmas fixtures do Vitest, lidas do disco e validadas com os schemas do app (`fixtures.ts`, `mock-api.ts`). As imagens do CDN viram um PNG transparente e qualquer outro host externo é bloqueado. Rota, método ou host sem mock falha o teste, como o `onUnhandledRequest: 'error'` do MSW. A fixture automática de `test.ts` instala o mock em cada página quando não há `E2E_BASE_URL`.
+- **D46** (C2): No detalhe do produto, id inválido (`.safeParse`) e 404 da API mostram "Produto não encontrado" (título da página e da aba), com link para o catálogo e sem "Tentar novamente". As demais falhas mostram o erro com "Tentar novamente".
+- **D47** (C5): No modo declarativo, o React Router não controla a rolagem. O `ScrollToTop` (`src/app/`) leva ao topo quando muda o caminho ou o parâmetro `pagina`. Busca e categoria não rolam a tela, e no Voltar e no Avançar (navegação `POP`) a rolagem fica com o navegador.
+- **D48**: O botão Voltar do detalhe usa `navigate(-1)` quando há histórico dentro do app, e assim preserva a busca, a categoria e a página. Quando o detalhe é a primeira entrada (deep link, `location.key === 'default'`), vai para `/produtos` com `replace`.
+- **D49**: O catálogo normaliza a URL com `<Navigate replace>`, sem criar entrada no histórico: parâmetros inválidos ou com o valor padrão saem da URL, e uma página além da última (ex.: depois de trocar a categoria) vira a última.
+- **D50**: Na URL do catálogo, a digitação da busca grava com `replace`, para não encher o histórico; categoria, página e "Limpar filtros" gravam com push, para o Voltar do navegador refazer o caminho. Mudar a busca ou a categoria volta à página 1. O `SearchField` guarda o texto localmente e só grava 400 ms depois da última tecla; se a busca mudar por fora (Voltar, "Limpar filtros"), o campo acompanha sem buscar de novo.
 - **A1**: Não adotar versão publicada há menos de 7 dias, exceto correção de segurança, e registrar a data de publicação (escopo em D13).
 - **A2**: `AppError` em `src/lib/errors.ts` (sem axios), `toAppError` em `services` e `HttpErrorNotifier` em `src/app/`. Única exceção de import: zodResolver → `@mantine/form`.
 - **A3**: Ajustada pela D41: o carrinho usa `useState` com funções puras e spread, não `useReducer`. O overlay do admin usa `useState` com atualizações funcionais e spread.

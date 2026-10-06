@@ -1,0 +1,29 @@
+.card {
+  position: relative;
+  height: 100%;
+  transition: box-shadow 150ms ease;
+
+  @mixin hover {
+    box-shadow: var(--mantine-shadow-md);
+  }
+
+  /* O foco do link (esticado) aparece no card inteiro. */
+  &:focus-within {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+}
+
+/* Link esticado: o ::after cobre o card, e o nome acessível do link continua
+   sendo só o título do produto. */
+.link {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
