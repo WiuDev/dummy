@@ -185,6 +185,25 @@ describe('PublicLayout', () => {
     expect(compact?.textContent).toBe('')
   })
 
+  it('o tema fica no cabeçalho e, no celular, no menu', async () => {
+    const user = userEvent.setup()
+    renderLayout()
+
+    expect(
+      within(screen.getByRole('banner')).getByRole('button', {
+        name: 'Tema escuro',
+      }),
+    ).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+
+    expect(
+      within(screen.getByRole('dialog', { name: 'Menu' })).getByRole('switch', {
+        name: 'Tema escuro',
+      }),
+    ).not.toBeChecked()
+  })
+
   it('visitante vê Entrar, que volta depois para a página atual', async () => {
     const user = userEvent.setup()
     renderLayout('/produtos/1')

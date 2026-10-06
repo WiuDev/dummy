@@ -16,6 +16,7 @@ import { IconInfoCircle, IconShoppingBag } from '@tabler/icons-react'
 import { Suspense } from 'react'
 import { Link, Outlet } from 'react-router'
 import { AppNavLink } from '@/components/AppNavLink'
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle'
 import { AdminProductsProvider } from '@/features/admin-products'
 import { useAuth, useSignOut } from '@/features/auth'
 import { paths } from '@/lib/paths'
@@ -32,9 +33,9 @@ function PageLoader() {
 }
 
 // Layout da área administrativa (carregado sob demanda, D66): AppShell com o
-// usuário, o Sair e uma navbar que recolhe no desktop e abre por um Burger no
-// celular, onde também ficam o usuário e o "Ver a loja". O aviso de simulação
-// fica fixo (D5), e o overlay só existe aqui.
+// usuário, o tema, o Sair e uma navbar que recolhe no desktop e abre por um
+// Burger no celular, onde também ficam o usuário, o "Ver a loja" e o tema. O
+// aviso de simulação fica fixo (D5), e o overlay só existe aqui.
 export function AdminLayout() {
   const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] =
     useDisclosure(false)
@@ -103,6 +104,7 @@ export function AdminLayout() {
                   {user.firstName}
                 </Text>
               )}
+              <ColorSchemeToggle />
             </Group>
             <Button variant="subtle" size="compact-sm" onClick={signOut}>
               Sair
@@ -131,6 +133,7 @@ export function AdminLayout() {
           >
             Ver a loja
           </Anchor>
+          <ColorSchemeToggle withLabel />
         </Stack>
       </AppShell.Navbar>
 

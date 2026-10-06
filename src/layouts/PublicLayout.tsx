@@ -3,6 +3,7 @@ import {
   AppShell,
   Burger,
   Container,
+  Divider,
   Drawer,
   Group,
   Stack,
@@ -11,6 +12,7 @@ import { useDisclosure } from '@mantine/hooks'
 import { IconShoppingBag } from '@tabler/icons-react'
 import { Link, Outlet } from 'react-router'
 import { AppNavLink } from '@/components/AppNavLink'
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle'
 import { AccountNav } from '@/features/auth'
 import { CartNavLink } from '@/features/cart'
 import { paths } from '@/lib/paths'
@@ -49,19 +51,17 @@ export function PublicLayout() {
               Loja Dummy
             </Anchor>
 
-            <Group
-              component="nav"
-              aria-label="Navegação principal"
-              gap="xs"
-              visibleFrom="sm"
-            >
-              {NAV_ITEMS.map((item) => (
-                <AppNavLink key={item.to} to={item.to}>
-                  {item.label}
-                </AppNavLink>
-              ))}
-              <CartNavLink />
-              <AccountNav />
+            <Group gap="xs" wrap="nowrap" visibleFrom="sm">
+              <Group component="nav" aria-label="Navegação principal" gap="xs">
+                {NAV_ITEMS.map((item) => (
+                  <AppNavLink key={item.to} to={item.to}>
+                    {item.label}
+                  </AppNavLink>
+                ))}
+                <CartNavLink />
+                <AccountNav />
+              </Group>
+              <ColorSchemeToggle />
             </Group>
 
             <Group gap="xs" wrap="nowrap" hiddenFrom="sm">
@@ -94,6 +94,8 @@ export function PublicLayout() {
           ))}
           <AccountNav onNavigate={closeMenu} />
         </Stack>
+        <Divider my="md" />
+        <ColorSchemeToggle withLabel />
       </Drawer>
 
       <AppShell.Main id={MAIN_ID} tabIndex={-1} className={classes.main}>

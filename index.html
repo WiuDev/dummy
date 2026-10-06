@@ -9,6 +9,26 @@
       content="Catálogo e compras com React, TypeScript e a API DummyJSON."
     />
     <title>Loja Dummy</title>
+    <script>
+      // Tema salvo (ou o do sistema) aplicado antes de o React montar, para a
+      // página não piscar no tema errado (D74). A chave é a do
+      // colorSchemeManager de src/app/theme.ts.
+      try {
+        const saved = localStorage.getItem('dummy:color-scheme')
+        const scheme =
+          saved === 'light' || saved === 'dark'
+            ? saved
+            : matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+        document.documentElement.setAttribute(
+          'data-mantine-color-scheme',
+          scheme,
+        )
+      } catch {
+        // Sem acesso ao storage, o MantineProvider aplica o tema ao montar.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
