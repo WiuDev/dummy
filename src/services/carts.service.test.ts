@@ -1,9 +1,6 @@
-import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import cartAddFixture from '@/test/fixtures/cart-add.json'
-import { API_URL } from '@/test/msw/handlers'
 import { recordRequests, summarizeRequest } from '@/test/msw/requests'
-import { server } from '@/test/msw/server'
 import { seedActiveSession } from '@/test/session'
 import { checkout } from './carts.service'
 
@@ -48,25 +45,17 @@ describe('checkout', () => {
 
   it('falha quando a API descarta produtos do pedido', async () => {
     seedActiveSession()
-    // Resposta real da API para um id de produto que ela não conhece.
-    server.use(
-      http.post(`${API_URL}/auth/carts/add`, () =>
-        HttpResponse.json(
-          {
-            id: 209,
-            products: [],
-            total: 0,
-            discountedTotal: 0,
-            userId: 1,
-            totalProducts: 0,
-            totalQuantity: 0,
-          },
-          { status: 201 },
-        ),
-      ),
-    )
 
-    await expect(checkout(ORDER)).rejects.toMatchObject({
+    // O handler, como a API, descarta sem avisar o id que não conhece.
+    await expect(
+      checkout({
+        userId: 1,
+        products: [
+          { id: 1, quantity: 1 },
+          { id: 9999, quantity: 1 },
+        ],
+      }),
+    ).rejects.toMatchObject({
       kind: 'invalid_response',
       message:
         'Alguns produtos do carrinho não estão mais disponíveis. Revise o carrinho e tente de novo.',
