@@ -3,6 +3,7 @@ import {
   AppShell,
   Burger,
   Container,
+  Divider,
   Drawer,
   Group,
   Stack,
@@ -11,6 +12,7 @@ import { useDisclosure } from '@mantine/hooks'
 import { IconShoppingBag } from '@tabler/icons-react'
 import { Link, Outlet } from 'react-router'
 import { AppNavLink } from '@/components/AppNavLink'
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle'
 import { AccountNav } from '@/features/auth'
 import { CartNavLink } from '@/features/cart'
 import { paths } from '@/lib/paths'
@@ -23,7 +25,9 @@ const NAV_ITEMS = [{ to: paths.products, label: 'Produtos' }] as const
 const MAIN_ID = 'conteudo'
 
 // Layout da área pública: cabeçalho persistente com a navegação (em linha no
-// desktop e num Drawer no mobile) e a página atual no <Outlet />.
+// desktop e num Drawer no mobile) e a página atual no <Outlet />. No celular,
+// o carrinho fica fora do Drawer, no cabeçalho, para o contador ficar à vista
+// (D71).
 export function PublicLayout() {
   const [menuOpened, { toggle: toggleMenu, close: closeMenu }] =
     useDisclosure(false)
@@ -47,29 +51,29 @@ export function PublicLayout() {
               Loja Dummy
             </Anchor>
 
-            <Group
-              component="nav"
-              aria-label="Navegação principal"
-              gap="xs"
-              visibleFrom="sm"
-            >
-              {NAV_ITEMS.map((item) => (
-                <AppNavLink key={item.to} to={item.to}>
-                  {item.label}
-                </AppNavLink>
-              ))}
-              <CartNavLink />
-              <AccountNav />
+            <Group gap="xs" wrap="nowrap" visibleFrom="sm">
+              <Group component="nav" aria-label="Navegação principal" gap="xs">
+                {NAV_ITEMS.map((item) => (
+                  <AppNavLink key={item.to} to={item.to}>
+                    {item.label}
+                  </AppNavLink>
+                ))}
+                <CartNavLink />
+                <AccountNav />
+              </Group>
+              <ColorSchemeToggle />
             </Group>
 
-            <Burger
-              opened={menuOpened}
-              onClick={toggleMenu}
-              hiddenFrom="sm"
-              size="sm"
-              aria-label="Abrir menu"
-              aria-expanded={menuOpened}
-            />
+            <Group gap="xs" wrap="nowrap" hiddenFrom="sm">
+              <CartNavLink compact />
+              <Burger
+                opened={menuOpened}
+                onClick={toggleMenu}
+                size="sm"
+                aria-label="Abrir menu"
+                aria-expanded={menuOpened}
+              />
+            </Group>
           </Group>
         </Container>
       </AppShell.Header>
@@ -88,9 +92,10 @@ export function PublicLayout() {
               {item.label}
             </AppNavLink>
           ))}
-          <CartNavLink onClick={closeMenu} />
           <AccountNav onNavigate={closeMenu} />
         </Stack>
+        <Divider my="md" />
+        <ColorSchemeToggle withLabel />
       </Drawer>
 
       <AppShell.Main id={MAIN_ID} tabIndex={-1} className={classes.main}>

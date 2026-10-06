@@ -50,6 +50,13 @@ const headerNav = () =>
     name: 'Navegação principal',
   })
 
+// O link compacto do carrinho, do cabeçalho do celular: o que fica fora da
+// navegação de desktop (no jsdom, os dois aparecem juntos).
+const compactCartLink = (name: string) =>
+  within(screen.getByRole('banner'))
+    .getAllByRole('link', { name })
+    .find((link) => !headerNav().contains(link))
+
 // No jsdom o CSS do Mantine não é aplicado, então a navegação de desktop e o
 // Burger do mobile aparecem juntos; o Drawer só existe quando aberto.
 describe('PublicLayout', () => {
@@ -154,21 +161,47 @@ describe('PublicLayout', () => {
     expect(within(cartLink).getByText('99+')).toBeInTheDocument()
   })
 
-  it('no menu mobile, o carrinho também tem contador e fecha o menu', async () => {
+  it('no celular, o carrinho fica no cabeçalho, com o ícone e o contador, e não no menu', async () => {
     const user = userEvent.setup()
     renderLayout('/produtos', [mascaraItem])
+    const compact = () => compactCartLink('Carrinho, 1 item')
+
+    expect(compact()).toHaveTextContent('1')
+    await user.click(compact() ?? document.body)
+
+    expect(screen.getByRole('main')).toHaveTextContent('Itens do carrinho')
+    expect(compact()).toHaveAttribute('aria-current', 'page')
 
     await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
     const drawer = screen.getByRole('dialog', { name: 'Menu' })
-    await user.click(
-      within(drawer).getByRole('link', { name: 'Carrinho, 1 item' }),
-    )
+    expect(within(drawer).queryByRole('link', { name: /^Carrinho/ })).toBeNull()
+  })
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByRole('main')).toHaveTextContent('Itens do carrinho')
+  it('no celular, com o carrinho vazio, o ícone se chama Carrinho e não tem selo', () => {
+    renderLayout()
+
+    const compact = compactCartLink('Carrinho')
+    expect(compact).toHaveAttribute('href', '/carrinho')
+    expect(compact?.textContent).toBe('')
+  })
+
+  it('o tema fica no cabeçalho e, no celular, no menu', async () => {
+    const user = userEvent.setup()
+    renderLayout()
+
     expect(
-      within(headerNav()).getByRole('link', { name: 'Carrinho, 1 item' }),
-    ).toHaveAttribute('aria-current', 'page')
+      within(screen.getByRole('banner')).getByRole('button', {
+        name: 'Tema escuro',
+      }),
+    ).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(screen.getByRole('button', { name: 'Abrir menu' }))
+
+    expect(
+      within(screen.getByRole('dialog', { name: 'Menu' })).getByRole('switch', {
+        name: 'Tema escuro',
+      }),
+    ).not.toBeChecked()
   })
 
   it('visitante vê Entrar, que volta depois para a página atual', async () => {

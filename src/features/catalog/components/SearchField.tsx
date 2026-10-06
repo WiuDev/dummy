@@ -45,7 +45,7 @@ export function SearchField({ value, onSearch }: SearchFieldProps) {
     <TextInput
       type="search"
       label="Buscar produtos"
-      placeholder="Nome, marca ou descrição"
+      placeholder="Nome ou descrição"
       leftSection={<IconSearch size={16} aria-hidden />}
       value={text}
       onChange={(event) => {

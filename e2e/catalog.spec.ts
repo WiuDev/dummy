@@ -105,9 +105,17 @@ test.describe('catálogo', () => {
         header.getByRole('navigation', { name: 'Navegação principal' }),
       ).toBeHidden()
 
+      // O carrinho fica no cabeçalho, com o contador à vista.
+      await expect(header.getByRole('link', { name: 'Carrinho' })).toBeVisible()
+      await page.getByRole('button', { name: 'Adicionar ao carrinho' }).click()
+      await expect(
+        header.getByRole('link', { name: 'Carrinho, 1 item' }),
+      ).toContainText('1')
+
       await menuButton.click()
 
       await expect(menuButton).toHaveAttribute('aria-expanded', 'true')
+      await expect(menu.getByRole('link', { name: /^Carrinho/ })).toHaveCount(0)
 
       await menu.getByRole('link', { name: 'Produtos' }).click()
 

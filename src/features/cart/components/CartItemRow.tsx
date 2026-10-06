@@ -18,6 +18,7 @@ import { PRODUCT_IMAGE_FALLBACK } from '@/lib/image-fallback'
 import { paths } from '@/lib/paths'
 import type { CartItem } from '@/schemas/cart'
 import { lineTotalCents } from '../context/cart-state'
+import { cartItemTitleId } from './cart-item-ids'
 
 export interface CartItemRowProps {
   readonly item: CartItem
@@ -60,6 +61,7 @@ export function CartItemRow({
           <Anchor
             component={Link}
             to={paths.product(item.id)}
+            id={cartItemTitleId(item.id)}
             fw={600}
             c="inherit"
           >

@@ -7,7 +7,7 @@ import {
 } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { type InitialEntry, MemoryRouter } from 'react-router'
-import { theme } from '@/app/theme'
+import { colorSchemeManager, theme } from '@/app/theme'
 import { AuthProvider } from '@/features/auth'
 import { CartProvider } from '@/features/cart'
 import { writeSession } from '@/lib/auth-session'
@@ -33,8 +33,8 @@ export interface RenderWithProvidersOptions extends Omit<
 }
 
 // Envolve o componente nos providers da aplicação: Mantine em modo de teste
-// (sem transições nem portais), notificações, roteador em memória, sessão e
-// carrinho.
+// (sem transições nem portais), com o tema salvo como no App, notificações,
+// roteador em memória, sessão e carrinho.
 export function renderWithProviders(
   ui: ReactElement,
   {
@@ -55,7 +55,12 @@ export function renderWithProviders(
 
   function Providers({ children }: { readonly children: ReactNode }) {
     return (
-      <MantineProvider theme={theme} env="test">
+      <MantineProvider
+        theme={theme}
+        colorSchemeManager={colorSchemeManager}
+        defaultColorScheme="auto"
+        env="test"
+      >
         <Notifications />
         <MemoryRouter
           initialEntries={[...entries]}

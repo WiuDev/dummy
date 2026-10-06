@@ -145,7 +145,7 @@ describe('CartPage', () => {
     expect(readCartItems()).toEqual([{ ...paletteItem, quantity: 5 }])
   })
 
-  it('remove itens até o carrinho ficar vazio', async () => {
+  it('remove itens até o carrinho ficar vazio, com o foco no vizinho e depois no título', async () => {
     const user = userEvent.setup()
     renderCart([mascaraItem, paletteItem])
 
@@ -161,12 +161,12 @@ describe('CartPage', () => {
       ).getAllByRole('listitem'),
     ).toHaveLength(1)
     expect(summary()).toHaveTextContent('TotalUS$ 8,94')
+    // Era o último: o foco vai para o anterior.
+    expect(
+      screen.getByRole('link', { name: 'Essence Mascara Lash Princess' }),
+    ).toHaveFocus()
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Remover Essence Mascara Lash Princess do carrinho',
-      }),
-    )
+    await user.keyboard('{Tab}{Tab}{Enter}')
 
     expect(
       screen.getByRole('heading', {
@@ -175,6 +175,25 @@ describe('CartPage', () => {
       }),
     ).toBeInTheDocument()
     expect(readCartItems()).toEqual([])
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Carrinho' }),
+    ).toHaveFocus()
+  })
+
+  it('remover um item leva o foco ao item seguinte', async () => {
+    const user = userEvent.setup()
+    renderCart([mascaraItem, paletteItem])
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Remover Essence Mascara Lash Princess do carrinho',
+      }),
+    )
+
+    expect(
+      screen.getByRole('link', { name: 'Eyeshadow Palette with Mirror' }),
+    ).toHaveFocus()
+    expect(readCartItems()).toEqual([paletteItem])
   })
 })
 

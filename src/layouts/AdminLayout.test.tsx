@@ -55,6 +55,26 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('main')).toHaveTextContent('Itens locais: 0')
   })
 
+  it('no cabeçalho fica o tema; no celular, o menu traz o usuário, o Ver a loja e o tema', () => {
+    renderLayout()
+
+    expect(
+      within(screen.getByRole('banner')).getByRole('button', {
+        name: 'Tema escuro',
+      }),
+    ).toBeInTheDocument()
+    const navbar = screen.getByRole('navigation', {
+      name: 'Navegação do admin',
+    })
+    expect(within(navbar).getByText('Emily')).toBeInTheDocument()
+    expect(
+      within(navbar).getByRole('link', { name: 'Ver a loja' }),
+    ).toHaveAttribute('href', '/produtos')
+    expect(
+      within(navbar).getByRole('switch', { name: 'Tema escuro' }),
+    ).toBeInTheDocument()
+  })
+
   it('recolhe a navbar no desktop e a abre pelo Burger no celular', async () => {
     const user = userEvent.setup()
     renderLayout()
