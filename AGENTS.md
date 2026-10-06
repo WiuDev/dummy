@@ -124,9 +124,9 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 
 ## CI/CD
 
-- `ci.yml`: push em qualquer branch, pull request para a `main` e `workflow_call`. Checks exigidos pelo ruleset: **`verify`** e **`e2e`**. Não renomeie esses jobs nem use filtros de caminho, porque um check exigido que não roda trava o merge. O `verify` roda `yarn test:coverage` e publica o relatório como artefato `coverage`.
+- `ci.yml`: push em qualquer branch, pull request para a `main` e `workflow_call`. Checks exigidos pelo ruleset: **`verify`**, **`e2e`** e **`pr-title`** (este no `pr-title.yml`). Não renomeie esses jobs nem use filtros de caminho, porque um check exigido que não roda trava o merge. O `verify` roda `yarn test:coverage` e publica o relatório como artefato `coverage`.
 - `deploy.yml`: push na `main` ou disparo manual. Reusa o CI como portão e roda build → deploy no Pages → espera a versão publicada (meta `app-version`, D34) → smoke `@smoke` em produção.
-- `pr-title.yml`: o job **`pr-title`** valida o título do PR, que vira a mensagem do squash, no padrão Conventional Commits (D31).
+- `pr-title.yml`: o job **`pr-title`** valida o título do PR, que vira a mensagem do squash, no padrão Conventional Commits (D31). Também é check exigido.
 - Só actions oficiais (`actions/*`), fixadas por SHA completo com o comentário da versão (D19). Novas versões entram via Dependabot, que respeita 7 dias de espera.
 - Passos sempre separados e nomeados; a instalação é literalmente `yarn install --frozen-lockfile`.
 
@@ -150,7 +150,7 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 - **D8**: MSW na linha 2.x (2.15.0).
 - **D9**: `exactOptionalPropertyTypes` desligado.
 - **D10**: O enunciado do curso não é versionado neste repositório.
-- **D11**: Ruleset da `main`: PR obrigatório com 0 aprovações, checks obrigatórios, modo loose, sem bypass.
+- **D11**: Ruleset da `main`: PR obrigatório com 0 aprovações, checks obrigatórios (`verify`, `e2e` e `pr-title`), merge só por squash, exclusão e force push bloqueados, modo loose, sem bypass.
 - **D12**: Ícones aprovados. Dependabot só para GitHub Actions, com cooldown de 7 dias, na Fase 1. axe fica de fora por ora; o lint de título de PR entrou na Fase 2 (D31).
 - **D13**: A A1 vale para as dependências diretas. Transitivas com menos de 7 dias são listadas no relatório de cada fase, sem fixação via `resolutions`.
 - **D14**: Os caminhos das rotas ficam centralizados em `src/lib/paths.ts`.
