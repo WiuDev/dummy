@@ -1,21 +1,39 @@
+import { Title } from '@mantine/core'
 import { screen } from '@testing-library/react'
+import { useLocation } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import { UnderConstructionPage } from '@/routes/UnderConstructionPage'
 import { renderWithProviders } from './render'
+
+// Componente do Mantine que lê a rota: só renderiza com os dois providers.
+function CurrentRoute() {
+  const { pathname } = useLocation()
+  return <Title order={1}>Rota {pathname}</Title>
+}
 
 describe('renderWithProviders', () => {
   it('renderiza com Mantine e com o roteador na rota pedida', () => {
-    renderWithProviders(<UnderConstructionPage />, { route: '/produtos/1' })
+    renderWithProviders(<CurrentRoute />, { route: '/produtos/1' })
 
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Em construção' }),
+      screen.getByRole('heading', { level: 1, name: 'Rota /produtos/1' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('/produtos/1')).toBeInTheDocument()
   })
 
   it('usa a raiz quando nenhuma rota é informada', () => {
-    renderWithProviders(<UnderConstructionPage />)
+    renderWithProviders(<CurrentRoute />)
 
-    expect(screen.getByText('/')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Rota /' }),
+    ).toBeInTheDocument()
+  })
+
+  it('com initialEntries, a última entrada é a rota atual', () => {
+    renderWithProviders(<CurrentRoute />, {
+      initialEntries: ['/produtos', '/produtos/1'],
+    })
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Rota /produtos/1' }),
+    ).toBeInTheDocument()
   })
 })

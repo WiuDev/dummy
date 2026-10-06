@@ -9,21 +9,47 @@ function renderRoute(route: string) {
 }
 
 describe('AppRoutes', () => {
-  it('redireciona a home para /produtos dentro do layout', () => {
+  it('redireciona a home para o catálogo, dentro do layout', async () => {
     renderRoute('/')
 
     expect(screen.getByRole('banner')).toBeInTheDocument()
+    const main = screen.getByRole('main')
     expect(
-      within(screen.getByRole('main')).getByText('/produtos'),
-    ).toBeVisible()
+      within(main).getByRole('heading', { level: 1, name: 'Produtos' }),
+    ).toBeInTheDocument()
+    expect(
+      await within(main).findByRole('list', { name: 'Produtos' }),
+    ).toBeInTheDocument()
   })
 
-  it('abre o deep link de um produto dentro do layout', () => {
-    renderRoute('/produtos/1')
+  it('do catálogo, o card leva ao detalhe do produto', async () => {
+    const user = userEvent.setup()
+    renderRoute('/produtos')
+
+    await user.click(
+      await screen.findByRole('link', {
+        name: 'Essence Mascara Lash Princess',
+      }),
+    )
 
     expect(
-      within(screen.getByRole('main')).getByText('/produtos/1'),
-    ).toBeVisible()
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Essence Mascara Lash Princess',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('abre o deep link de um produto dentro do layout', async () => {
+    renderRoute('/produtos/1')
+
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(
+      await within(screen.getByRole('main')).findByRole('heading', {
+        level: 1,
+        name: 'Essence Mascara Lash Princess',
+      }),
+    ).toBeInTheDocument()
   })
 
   it('mostra a página não encontrada para rotas desconhecidas', async () => {
@@ -43,6 +69,8 @@ describe('AppRoutes', () => {
       within(main).getByRole('link', { name: 'Ver os produtos' }),
     )
 
-    expect(within(main).getByText('/produtos')).toBeVisible()
+    expect(
+      within(main).getByRole('heading', { level: 1, name: 'Produtos' }),
+    ).toBeInTheDocument()
   })
 })

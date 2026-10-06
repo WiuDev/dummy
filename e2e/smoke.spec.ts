@@ -26,16 +26,15 @@ test.describe('smoke', { tag: '@smoke' }, () => {
     await page.goto('./')
 
     await expect(page).toHaveURL(/\/produtos$/)
-    await expect(page).toHaveTitle('Loja Dummy')
+    await expect(page).toHaveTitle('Produtos · Loja Dummy')
     await expect(page.locator('meta[name="app-version"]')).toHaveAttribute(
       'content',
       expectedVersion,
     )
     await expectLayout(page)
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Em construção' }),
+      page.getByRole('heading', { level: 1, name: 'Produtos' }),
     ).toBeVisible()
-    await expect(page.getByText('/produtos', { exact: true })).toBeVisible()
   })
 
   test('um deep link abre a rota e resiste ao recarregamento', async ({
@@ -45,11 +44,11 @@ test.describe('smoke', { tag: '@smoke' }, () => {
 
     expect(response?.status()).toBe(isDeployed ? 404 : 200)
     await expectLayout(page)
-    await expect(page.getByText('/produtos/1', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Voltar' })).toBeVisible()
 
     await page.reload()
 
-    await expect(page.getByText('/produtos/1', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Voltar' })).toBeVisible()
   })
 
   test('uma rota desconhecida mostra a página não encontrada', async ({

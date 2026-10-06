@@ -25,13 +25,15 @@ afterEach(() => {
 })
 
 describe('App', () => {
-  it('mostra a página em construção com a rota atual', () => {
+  it('abre o detalhe do produto pela rota', async () => {
     renderApp('/produtos/1')
 
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Em construção' }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Essence Mascara Lash Princess',
+      }),
     ).toBeInTheDocument()
-    expect(screen.getByText('/produtos/1')).toBeInTheDocument()
   })
 
   it('exibe as falhas de comunicação avisadas pelo interceptor', async () => {
