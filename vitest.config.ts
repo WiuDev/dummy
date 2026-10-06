@@ -1,4 +1,4 @@
-import { defineConfig, mergeConfig } from 'vitest/config'
+import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 import viteConfig from './vite.config.ts'
 
 const coreThresholds = {
@@ -15,6 +15,8 @@ export default mergeConfig(
       environment: 'jsdom',
       // Só os testes de src/: os specs do Playwright (e2e/) rodam com o Playwright.
       include: ['src/**/*.test.{ts,tsx}'],
+      // Os de contrato saem para a API real: têm config própria (D75).
+      exclude: [...configDefaults.exclude, 'src/**/*.contract.test.ts'],
       setupFiles: ['./src/test/setup.ts'],
       restoreMocks: true,
       coverage: {

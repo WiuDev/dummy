@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:contract": "vitest run --config vitest.contract.config.ts",
     "verify": "yarn lint && yarn format:check && yarn typecheck && yarn test:coverage && yarn build && yarn test:e2e"
   },
   "dependencies": {

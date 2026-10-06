@@ -1,0 +1,38 @@
+name: Contrato da API
+
+# Confere o contrato da DummyJSON real (D75), à mão ou toda segunda-feira. Não
+# roda em push nem em pull request: nunca bloqueia o merge, e o job não é um
+# check exigido pelo ruleset.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configurar o Node (.nvmrc)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Versões do Node e do Yarn
+        run: node -v && yarn -v
+
+      - name: Instalar dependências
+        run: yarn install --frozen-lockfile
+
+      - name: Testes de contrato com a API real
+        run: yarn test:contract
