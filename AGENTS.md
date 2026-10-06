@@ -79,7 +79,7 @@ O conjunto de pastas de `src/` é fechado: criar uma nova pasta de topo exige at
 ## Convenções de código
 
 - TypeScript estrito (`strict`, `noImplicitAny`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `noImplicitReturns`). `erasableSyntaxOnly` proíbe `enum`/`namespace`: use uniões e `as const`. Com `verbatimModuleSyntax`, use `import type`.
-- Dados externos (API, storage, URL, `location.state`) entram como `unknown` e são validados com Zod (`.safeParse`). Tipos de domínio vêm de `z.infer`.
+- Dados externos (API, storage, URL, `location.state`) entram como `unknown` e são validados com Zod: `.safeParse` quando a falha muda o fluxo (ex.: id inválido vira "não encontrado"), ou `.parse` com `.catch` quando há um valor padrão (ex.: parâmetros do catálogo na URL), que nunca lança. Tipos de domínio vêm de `z.infer`.
 - Componentes funcionais e exports nomeados; `export default` só onde a ferramenta exige (configs).
 - Nomes de arquivo:
   - Módulos que exportam um componente, hook ou função principal levam o nome dela (`ProductCard.tsx`, `useCart.ts`, `zodResolver.ts`).
