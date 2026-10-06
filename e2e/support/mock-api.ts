@@ -155,9 +155,70 @@ function handlePost(route: Route, unhandled: string[]): Promise<void> {
       ? fulfillJson(route, cartFromOrder(order.data), 201)
       : fulfillJson(route, { message: 'Invalid cart' }, 400)
   }
+  // Como a API, o cadastro devolve os campos enviados, com o id 195.
+  if (pathname === '/auth/products/add') {
+    if (!hasTestBearer(route)) {
+      return fulfillJson(route, { message: 'Access Token is required' }, 401)
+    }
+    return fulfillJson(route, { ...asObject(body), id: 195 }, 201)
+  }
 
   unhandled.push(requestLabel(route))
   return fulfillJson(route, { message: `Rota não mockada: ${pathname}` }, 404)
+}
+
+function asObject(value: unknown): object {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value
+    : {}
+}
+
+// PUT e DELETE de /auth/products/:id, como a API: só para os produtos que ela
+// conhece. O PUT devolve 11 campos do produto, com os enviados por cima; o
+// DELETE devolve o produto inteiro, marcado como excluído (D61).
+function handleProductWrite(route: Route, unhandled: string[]): Promise<void> {
+  const request = route.request()
+  const { pathname } = new URL(request.url())
+  const match = /^\/auth\/products\/(\d+)$/.exec(pathname)
+  if (match === null) {
+    unhandled.push(requestLabel(route))
+    return fulfillJson(route, { message: `Rota não mockada: ${pathname}` }, 404)
+  }
+  if (!hasTestBearer(route)) {
+    return fulfillJson(route, { message: 'Access Token is required' }, 401)
+  }
+  const product = findProduct(Number(match[1]))
+  if (product === undefined) {
+    return fulfillJson(
+      route,
+      { message: `Product with id '${match[1] ?? ''}' not found` },
+      404,
+    )
+  }
+  if (request.method() === 'DELETE') {
+    return fulfillJson(route, {
+      ...product,
+      isDeleted: true,
+      deletedOn: new Date().toISOString(),
+    })
+  }
+  const { id, title, price, discountPercentage, stock, rating, images } =
+    product
+  const { thumbnail, description, brand, category } = product
+  return fulfillJson(route, {
+    id,
+    title,
+    price,
+    discountPercentage,
+    stock,
+    rating,
+    images,
+    thumbnail,
+    description,
+    brand,
+    category,
+    ...asObject(request.postDataJSON()),
+  })
 }
 
 // Responde como a DummyJSON. Rota ou método sem mock entra em unhandled (e
@@ -179,6 +240,9 @@ function handleApi(route: Route, unhandled: string[]): Promise<void> {
 
   if (request.method() === 'POST') {
     return handlePost(route, unhandled)
+  }
+  if (request.method() === 'PUT' || request.method() === 'DELETE') {
+    return handleProductWrite(route, unhandled)
   }
   if (request.method() !== 'GET') {
     unhandled.push(requestLabel(route))

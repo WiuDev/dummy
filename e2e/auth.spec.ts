@@ -1,4 +1,4 @@
-import { fixtures } from './support/fixtures.ts'
+import { sessionScript } from './support/session.ts'
 import { expect, isDeployed, test } from './support/test.ts'
 
 // Fluxo 3: autenticação com redirecionamento, sobre a API mockada.
@@ -67,17 +67,7 @@ test.describe('autenticação', () => {
   test('uma sessão salva vencida leva ao login, com aviso', async ({
     page,
   }) => {
-    const { id, username, email, firstName, lastName, image } = fixtures.login
-    const expiredSession = JSON.stringify({
-      version: 1,
-      accessToken: fixtures.login.accessToken,
-      expiresAt: Date.now() - 60_000,
-      user: { id, username, email, firstName, lastName, image },
-    })
-    // Script como texto: o tsconfig do E2E não tem os tipos do DOM.
-    await page.addInitScript({
-      content: `localStorage.setItem('dummy:auth:v1', ${JSON.stringify(expiredSession)})`,
-    })
+    await page.addInitScript({ content: sessionScript(Date.now() - 60_000) })
 
     await page.goto('admin')
 
