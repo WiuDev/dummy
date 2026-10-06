@@ -25,8 +25,10 @@ export default mergeConfig(
           'src/test/**',
           '**/*.test.{ts,tsx}',
           '**/*.d.ts',
-          // CSS Modules não têm código a cobrir; sem isto, aparecem zerados.
+          // CSS Modules e os index.ts das features (só reexportam) não têm
+          // código a cobrir; sem isto, aparecem zerados.
           '**/*.css',
+          'src/features/*/index.ts',
         ],
         reporter: [['text', { skipFull: false }], 'html', 'json-summary'],
         thresholds: {
