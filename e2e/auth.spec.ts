@@ -33,17 +33,15 @@ test.describe('autenticação', () => {
     await password.fill('emilyspass')
     await page.getByRole('button', { name: 'Entrar' }).click()
 
-    await expect(page).toHaveURL(/\/admin$/)
+    // O /admin leva à gestão de produtos, no layout do admin.
+    await expect(page).toHaveURL(/\/admin\/produtos$/)
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Área administrativa' }),
+      page.getByRole('heading', { level: 1, name: 'Gestão de produtos' }),
     ).toBeVisible()
-    await expect(nav.getByText('Emily')).toBeVisible()
-    await expect(nav.getByRole('link', { name: 'Admin' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
+    const adminHeader = page.getByRole('banner')
+    await expect(adminHeader.getByText('Emily')).toBeVisible()
 
-    await nav.getByRole('button', { name: 'Sair' }).click()
+    await adminHeader.getByRole('button', { name: 'Sair' }).click()
 
     await expect(page).toHaveURL(/\/produtos$/)
     await expect(nav.getByRole('link', { name: 'Entrar' })).toBeVisible()

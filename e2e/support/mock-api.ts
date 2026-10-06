@@ -73,6 +73,14 @@ function requestLabel(route: Route): string {
   return `${route.request().method()} ${route.request().url()}`
 }
 
+// A requisição traz o Bearer do token da fixture de login.
+function hasTestBearer(route: Route): boolean {
+  return (
+    route.request().headers()['authorization'] ===
+    `Bearer ${fixtures.login.accessToken}`
+  )
+}
+
 function isTestAccount(body: unknown): boolean {
   return (
     typeof body === 'object' &&
@@ -139,10 +147,7 @@ function handlePost(route: Route, unhandled: string[]): Promise<void> {
       : fulfillJson(route, { message: 'Invalid credentials' }, 400)
   }
   if (pathname === '/auth/carts/add') {
-    if (
-      request.headers()['authorization'] !==
-      `Bearer ${fixtures.login.accessToken}`
-    ) {
+    if (!hasTestBearer(route)) {
       return fulfillJson(route, { message: 'Access Token is required' }, 401)
     }
     const order = checkoutRequestSchema.safeParse(body)
@@ -160,7 +165,17 @@ function handlePost(route: Route, unhandled: string[]): Promise<void> {
 function handleApi(route: Route, unhandled: string[]): Promise<void> {
   const request = route.request()
   const url = new URL(request.url())
-  const { pathname } = url
+
+  // As leituras do admin (/auth/products) têm o mesmo contrato das públicas,
+  // mas exigem o Bearer (D28).
+  const isAdminRead =
+    request.method() === 'GET' && url.pathname.startsWith('/auth/products')
+  if (isAdminRead && !hasTestBearer(route)) {
+    return fulfillJson(route, { message: 'Access Token is required' }, 401)
+  }
+  const pathname = isAdminRead
+    ? url.pathname.slice('/auth'.length)
+    : url.pathname
 
   if (request.method() === 'POST') {
     return handlePost(route, unhandled)
