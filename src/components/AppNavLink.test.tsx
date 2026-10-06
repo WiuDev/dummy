@@ -61,4 +61,16 @@ describe('AppNavLink', () => {
       'page',
     )
   })
+
+  it('usa o aria-label como nome acessível, quando informado', () => {
+    renderWithProviders(
+      <AppNavLink to="/carrinho" aria-label="Carrinho, 2 itens">
+        Carrinho 2
+      </AppNavLink>,
+    )
+
+    expect(
+      screen.getByRole('link', { name: 'Carrinho, 2 itens' }),
+    ).toHaveTextContent('Carrinho 2')
+  })
 })

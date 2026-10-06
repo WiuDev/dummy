@@ -8,6 +8,9 @@ export interface AppNavLinkProps {
   // Com end, o link só fica ativo na rota exata (não nas filhas).
   readonly end?: boolean
   readonly onClick?: () => void
+  // Nome acessível quando o texto visível não basta (ex.: o contador do
+  // carrinho). Deve começar pelo texto visível.
+  readonly 'aria-label'?: string
 }
 
 // Item de navegação persistente. O NavLink do React Router marca a rota ativa
@@ -17,9 +20,16 @@ export function AppNavLink({
   children,
   end = false,
   onClick,
+  'aria-label': ariaLabel,
 }: AppNavLinkProps) {
   return (
-    <NavLink to={to} end={end} onClick={onClick} className={classes.link}>
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className={classes.link}
+    >
       {children}
     </NavLink>
   )

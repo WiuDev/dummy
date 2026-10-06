@@ -11,10 +11,12 @@ import { useDisclosure } from '@mantine/hooks'
 import { IconShoppingBag } from '@tabler/icons-react'
 import { Link, Outlet } from 'react-router'
 import { AppNavLink } from '@/components/AppNavLink'
+import { CartNavLink } from '@/features/cart'
 import { paths } from '@/lib/paths'
 import classes from './PublicLayout.module.css'
 
-// Só rotas que já existem: Carrinho e Entrar chegam nas Fases 4 e 5.
+// Só rotas que já existem: Entrar chega na Fase 5. O Carrinho vem depois, com
+// link próprio por causa do contador.
 const NAV_ITEMS = [{ to: paths.products, label: 'Produtos' }] as const
 
 const MAIN_ID = 'conteudo'
@@ -55,6 +57,7 @@ export function PublicLayout() {
                   {item.label}
                 </AppNavLink>
               ))}
+              <CartNavLink />
             </Group>
 
             <Burger
@@ -83,6 +86,7 @@ export function PublicLayout() {
               {item.label}
             </AppNavLink>
           ))}
+          <CartNavLink onClick={closeMenu} />
         </Stack>
       </Drawer>
 
