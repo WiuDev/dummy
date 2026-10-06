@@ -16,15 +16,15 @@ export interface ProductGalleryProps {
 }
 
 // Galeria simples: a imagem principal e miniaturas que a trocam. Para começar
-// de novo pela primeira imagem, a página usa a key do produto.
+// de novo pela primeira imagem, a página usa a key do produto. Sem imagens, o
+// Image mostra a imagem neutra.
 export function ProductGallery({ images, title }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const selectedImage = images[selectedIndex] ?? images[0] ?? null
 
   return (
     <Stack gap="sm">
       <Image
-        src={selectedImage}
+        src={images[selectedIndex]}
         alt={title}
         fit="contain"
         radius="md"
