@@ -12,8 +12,10 @@ Referência persistente para quem trabalha neste repositório, seja pessoa ou ag
 ## Fluxo de trabalho
 
 - Etapas: auditoria (quando já houver código) → planejamento → implementação → testes → publicação.
-- **Nenhum código sem plano aprovado.** Implemente só a fase aprovada, sem antecipar dependências ou arquivos de outras fases.
+- **Nenhum código sem plano aprovado**, exceto nas fases aceleradas. Implemente só a fase aprovada, sem antecipar dependências ou arquivos de outras fases.
+- Fases aceleradas (D51): nas Fases 4 e 7, plano e implementação acontecem na mesma etapa. O plano abre o relatório e a implementação segue em seguida, desde que fique dentro das decisões vigentes. Se surgir decisão nova (dependência fora das previstas, mudança nas regras de camadas, spike que contrarie o plano), pare depois do plano e reporte. Nas Fases 5 e 6, o plano continua sendo revisado antes da implementação.
 - Se algo divergir do plano (ferramenta que falha, versão incompatível, regra que não fecha), pare e reporte as opções. Não troque ferramenta nem arquitetura por conta própria.
+- Relatórios curtos (D52): sem código nem saídas completas, a menos que sejam pedidos. Se um comando falhar, traga só o trecho do erro.
 - Não faça push nem abra PR sem autorização explícita da etapa.
 - Não crie, altere nem dependa de arquivos fora do repositório. Exceções autorizadas: o cache do Yarn e os navegadores do Playwright no cache padrão do usuário (D17).
 - Fases: 0 Fundação · 1 CI + deploy esqueleto · 2 Núcleo de dados · 3 Layout + catálogo · 4 Carrinho · 5 Autenticação + checkout · 6 Admin · 7 Polimento e entrega.
@@ -201,6 +203,9 @@ Antes do primeiro `yarn test:e2e`, instale o navegador com `yarn playwright inst
 - **D48**: O botão Voltar do detalhe usa `navigate(-1)` quando há histórico dentro do app, e assim preserva a busca, a categoria e a página. Quando o detalhe é a primeira entrada (deep link, `location.key === 'default'`), vai para `/produtos` com `replace`.
 - **D49**: O catálogo normaliza a URL com `<Navigate replace>`, sem criar entrada no histórico: parâmetros inválidos ou com o valor padrão saem da URL, e uma página além da última (ex.: depois de trocar a categoria) vira a última.
 - **D50**: Na URL do catálogo, a digitação da busca grava com `replace`, para não encher o histórico; categoria, página e "Limpar filtros" gravam com push, para o Voltar do navegador refazer o caminho. Mudar a busca ou a categoria volta à página 1. O `SearchField` guarda o texto localmente e só grava 400 ms depois da última tecla; se a busca mudar por fora (Voltar, "Limpar filtros"), o campo acompanha sem buscar de novo.
+- **D51**: Fases aceleradas: nas Fases 4 e 7, o plano e a implementação acontecem na mesma etapa, dentro das decisões vigentes, e o plano abre o relatório. Uma decisão nova (dependência fora das previstas, mudança nas regras de camadas, spike que contrarie o plano) interrompe o trabalho depois do plano. As Fases 5 e 6 seguem com o plano revisado antes da implementação.
+- **D52**: Os relatórios são curtos: sem código nem saídas completas, a menos que sejam pedidos. Numa falha, só o trecho do erro.
+- **D53**: O aviso de chunk acima de 500 kB do build fica nos logs por enquanto. A divisão por rota com `React.lazy` entra na Fase 6, com a área admin.
 - **A1**: Não adotar versão publicada há menos de 7 dias, exceto correção de segurança, e registrar a data de publicação (escopo em D13).
 - **A2**: `AppError` em `src/lib/errors.ts` (sem axios), `toAppError` em `services` e `HttpErrorNotifier` em `src/app/`. Única exceção de import: zodResolver → `@mantine/form`.
 - **A3**: Ajustada pela D41: o carrinho usa `useState` com funções puras e spread, não `useReducer`. O overlay do admin usa `useState` com atualizações funcionais e spread.
