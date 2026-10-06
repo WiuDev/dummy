@@ -23,7 +23,9 @@ const NAV_ITEMS = [{ to: paths.products, label: 'Produtos' }] as const
 const MAIN_ID = 'conteudo'
 
 // Layout da área pública: cabeçalho persistente com a navegação (em linha no
-// desktop e num Drawer no mobile) e a página atual no <Outlet />.
+// desktop e num Drawer no mobile) e a página atual no <Outlet />. No celular,
+// o carrinho fica fora do Drawer, no cabeçalho, para o contador ficar à vista
+// (D71).
 export function PublicLayout() {
   const [menuOpened, { toggle: toggleMenu, close: closeMenu }] =
     useDisclosure(false)
@@ -62,14 +64,16 @@ export function PublicLayout() {
               <AccountNav />
             </Group>
 
-            <Burger
-              opened={menuOpened}
-              onClick={toggleMenu}
-              hiddenFrom="sm"
-              size="sm"
-              aria-label="Abrir menu"
-              aria-expanded={menuOpened}
-            />
+            <Group gap="xs" wrap="nowrap" hiddenFrom="sm">
+              <CartNavLink compact />
+              <Burger
+                opened={menuOpened}
+                onClick={toggleMenu}
+                size="sm"
+                aria-label="Abrir menu"
+                aria-expanded={menuOpened}
+              />
+            </Group>
           </Group>
         </Container>
       </AppShell.Header>
@@ -88,7 +92,6 @@ export function PublicLayout() {
               {item.label}
             </AppNavLink>
           ))}
-          <CartNavLink onClick={closeMenu} />
           <AccountNav onNavigate={closeMenu} />
         </Stack>
       </Drawer>

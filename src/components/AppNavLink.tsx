@@ -11,7 +11,8 @@ export interface AppNavLinkProps {
   // State da navegação (ex.: o from que o login usa para voltar).
   readonly state?: unknown
   // Nome acessível quando o texto visível não basta (ex.: o contador do
-  // carrinho). Deve começar pelo texto visível.
+  // carrinho) ou não existe (só o ícone). Se houver texto visível, o nome deve
+  // começar por ele.
   readonly 'aria-label'?: string
 }
 

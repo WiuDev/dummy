@@ -58,9 +58,9 @@ describe('AppRoutes', () => {
     renderRoute('/produtos')
 
     await user.click(
-      within(screen.getByRole('banner')).getByRole('link', {
-        name: 'Carrinho',
-      }),
+      within(
+        screen.getByRole('navigation', { name: 'Navegação principal' }),
+      ).getByRole('link', { name: 'Carrinho' }),
     )
 
     expect(
