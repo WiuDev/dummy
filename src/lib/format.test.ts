@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatCents,
+  formatCount,
   formatCurrency,
   formatDate,
   formatPercent,
@@ -16,6 +18,26 @@ describe('formatCurrency', () => {
     [0, `US$${NBSP}0,00`],
   ])('formata %s como %s', (value, expected) => {
     expect(formatCurrency(value)).toBe(expected)
+  })
+})
+
+describe('formatCents', () => {
+  it.each([
+    [894, `US$${NBSP}8,94`],
+    [123450, `US$${NBSP}1.234,50`],
+    [0, `US$${NBSP}0,00`],
+  ])('formata %s centavos como %s', (cents, expected) => {
+    expect(formatCents(cents)).toBe(expected)
+  })
+})
+
+describe('formatCount', () => {
+  it.each([
+    [0, '0 itens'],
+    [1, '1 item'],
+    [3, '3 itens'],
+  ])('formata %s como %s', (count, expected) => {
+    expect(formatCount(count, 'item', 'itens')).toBe(expected)
   })
 })
 
