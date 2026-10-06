@@ -48,8 +48,16 @@ jobs:
       - name: Typecheck
         run: yarn typecheck
 
-      - name: Testes unitários
-        run: yarn test
+      - name: Testes unitários (com cobertura)
+        run: yarn test:coverage
+
+      - name: Publicar o relatório de cobertura
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
 
       - name: Build de produção
         run: yarn build

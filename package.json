@@ -19,8 +19,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "verify": "yarn lint && yarn format:check && yarn typecheck && yarn test && yarn build && yarn test:e2e"
+    "verify": "yarn lint && yarn format:check && yarn typecheck && yarn test:coverage && yarn build && yarn test:e2e"
   },
   "dependencies": {
     "@mantine/core": "9.6.3",
