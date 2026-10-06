@@ -1,0 +1,6 @@
+/* A grade é uma lista: leitores de tela anunciam quantos produtos há. */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
