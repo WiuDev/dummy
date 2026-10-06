@@ -12,9 +12,9 @@ import {
 import { Link } from 'react-router'
 import { Price } from '@/components/Price'
 import { formatRating } from '@/lib/format'
+import { PRODUCT_IMAGE_FALLBACK } from '@/lib/image-fallback'
 import { paths } from '@/lib/paths'
 import type { ProductSummary } from '@/schemas/product'
-import { PRODUCT_IMAGE_FALLBACK } from './image-fallback'
 import classes from './ProductCard.module.css'
 import { StockBadge } from './StockBadge'
 

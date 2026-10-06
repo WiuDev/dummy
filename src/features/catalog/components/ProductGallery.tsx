@@ -7,7 +7,7 @@ import {
   VisuallyHidden,
 } from '@mantine/core'
 import { useState } from 'react'
-import { PRODUCT_IMAGE_FALLBACK } from './image-fallback'
+import { PRODUCT_IMAGE_FALLBACK } from '@/lib/image-fallback'
 import classes from './ProductGallery.module.css'
 
 export interface ProductGalleryProps {
