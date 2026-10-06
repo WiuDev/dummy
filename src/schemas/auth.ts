@@ -36,8 +36,28 @@ export const storedSessionSchema = z.object({
   user: authUserSchema,
 })
 
+// Formulário de login. As mensagens, em pt-BR, ficam no próprio schema, campo a
+// campo, sem locale global do Zod (D59).
+export const loginFormSchema = z.object({
+  username: z.string().trim().min(1, 'Informe o usuário.'),
+  password: z.string().min(1, 'Informe a senha.'),
+})
+
+// Caminho interno para onde voltar depois do login (D58): começa com uma única
+// "/" e não tem barra invertida nem espaços, para nunca virar outra origem
+// ("//evil.com", "/\evil.com") nem outro esquema ("javascript:").
+export const internalPathSchema = z
+  .string()
+  .max(2048)
+  .regex(/^\/(?![/\\])[^\s\\]*$/)
+
+// Estado de navegação que leva ao login: de onde a pessoa veio.
+export const loginRedirectStateSchema = z.object({ from: internalPathSchema })
+
 export type AuthUser = z.infer<typeof authUserSchema>
 export type LoginResponse = z.infer<typeof loginResponseSchema>
 export type CurrentUser = z.infer<typeof currentUserSchema>
 export type JwtPayload = z.infer<typeof jwtPayloadSchema>
 export type AuthSession = z.infer<typeof storedSessionSchema>
+export type LoginFormValues = z.input<typeof loginFormSchema>
+export type LoginRedirectState = z.infer<typeof loginRedirectStateSchema>

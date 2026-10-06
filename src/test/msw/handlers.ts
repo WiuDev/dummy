@@ -1,5 +1,5 @@
 import { http, HttpResponse, type RequestHandler } from 'msw'
-import cartAdd from '@/test/fixtures/cart-add.json'
+import { type CheckoutRequest, checkoutRequestSchema } from '@/schemas/cart'
 import categories from '@/test/fixtures/categories.json'
 import accessTokenRequired from '@/test/fixtures/error-access-token-required.json'
 import invalidCredentials from '@/test/fixtures/error-invalid-credentials.json'
@@ -42,6 +42,65 @@ function paginate(page: FixturePage, request: Request) {
 function searchResults(request: Request): FixturePage {
   const query = new URL(request.url).searchParams.get('q')?.trim()
   return query?.toLowerCase() === 'phone' ? searchPhone : EMPTY_PAGE
+}
+
+interface KnownProduct {
+  readonly id: number
+  readonly title: string
+  readonly price: number
+  readonly discountPercentage: number
+  readonly thumbnail: string
+}
+
+// Os produtos que a API "conhece" no checkout: os das fixtures.
+const knownProducts = new Map<number, KnownProduct>(
+  [
+    product1,
+    ...productsPage.products,
+    ...searchPhone.products,
+    ...smartphones.products,
+  ].map((product) => [product.id, product] as const),
+)
+
+const roundToCents = (value: number) => Math.round(value * 100) / 100
+
+// Como a API: monta o carrinho com os produtos que conhece, descarta os outros
+// sem avisar e arredonda para inteiro o valor com desconto de cada linha. Com o
+// pedido da fixture cart-add.json, a resposta é igual a ela.
+function cartFromOrder(order: CheckoutRequest) {
+  const products = order.products.flatMap(({ id, quantity }) => {
+    const product = knownProducts.get(id)
+    if (product === undefined) {
+      return []
+    }
+    const total = roundToCents(product.price * quantity)
+    return [
+      {
+        id,
+        title: product.title,
+        price: product.price,
+        quantity,
+        total,
+        discountPercentage: product.discountPercentage,
+        discountedPrice: Math.round(
+          total * (1 - product.discountPercentage / 100),
+        ),
+        thumbnail: product.thumbnail,
+      },
+    ]
+  })
+  return {
+    id: 209,
+    products,
+    total: roundToCents(products.reduce((sum, line) => sum + line.total, 0)),
+    discountedTotal: products.reduce(
+      (sum, line) => sum + line.discountedPrice,
+      0,
+    ),
+    userId: order.userId,
+    totalProducts: products.length,
+    totalQuantity: products.reduce((sum, line) => sum + line.quantity, 0),
+  }
 }
 
 export function hasBearer(request: Request): boolean {
@@ -150,9 +209,14 @@ export const handlers: RequestHandler[] = [
         : HttpResponse.json(notFound, { status: 404 })),
   ),
 
-  http.post(
-    `${API_URL}/auth/carts/add`,
-    ({ request }) =>
-      requireBearer(request) ?? HttpResponse.json(cartAdd, { status: 201 }),
-  ),
+  http.post(`${API_URL}/auth/carts/add`, async ({ request }) => {
+    const denied = requireBearer(request)
+    if (denied !== undefined) {
+      return denied
+    }
+    const order = checkoutRequestSchema.safeParse(await request.json())
+    return order.success
+      ? HttpResponse.json(cartFromOrder(order.data), { status: 201 })
+      : HttpResponse.json({ message: 'Invalid cart' }, { status: 400 })
+  }),
 ]

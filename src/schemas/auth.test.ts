@@ -3,10 +3,41 @@ import loginFixture from '@/test/fixtures/login.json'
 import meFixture from '@/test/fixtures/me.json'
 import {
   currentUserSchema,
+  internalPathSchema,
   jwtPayloadSchema,
+  loginFormSchema,
   loginResponseSchema,
   storedSessionSchema,
 } from './auth'
+
+describe('formulário de login', () => {
+  it('aceita usuário e senha preenchidos, sem os espaços do usuário', () => {
+    expect(
+      loginFormSchema.parse({ username: ' emilys ', password: 'emilyspass' }),
+    ).toEqual({ username: 'emilys', password: 'emilyspass' })
+  })
+
+  it('exige os dois campos, com as mensagens em pt-BR', () => {
+    const result = loginFormSchema.safeParse({ username: '  ', password: '' })
+
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      'Informe o usuário.',
+      'Informe a senha.',
+    ])
+  })
+})
+
+describe('caminho interno', () => {
+  it('aceita caminhos que começam com uma única barra', () => {
+    expect(internalPathSchema.safeParse('/produtos?q=phone').success).toBe(true)
+  })
+
+  it('recusa caminho maior que 2048 caracteres', () => {
+    expect(internalPathSchema.safeParse(`/${'a'.repeat(2048)}`).success).toBe(
+      false,
+    )
+  })
+})
 
 const session = {
   version: 1,

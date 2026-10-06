@@ -1,16 +1,19 @@
 import { Card, Divider, Group, Stack, Text, Title } from '@mantine/core'
+import type { ReactNode } from 'react'
 import { formatCents } from '@/lib/format'
 import type { CartTotals } from '../context/cart-state'
 
 export interface CartSummaryProps {
   readonly totals: CartTotals
+  // Ações abaixo dos totais (o "Finalizar compra" e o aviso de falha).
+  readonly children: ReactNode
 }
 
 const SUMMARY_TITLE_ID = 'resumo-do-carrinho'
 
 // Resumo com os totais, calculados em centavos. Os rótulos e valores formam uma
 // lista de definições (dl).
-export function CartSummary({ totals }: CartSummaryProps) {
+export function CartSummary({ totals, children }: CartSummaryProps) {
   return (
     <Card
       component="section"
@@ -46,6 +49,9 @@ export function CartSummary({ totals }: CartSummaryProps) {
             {formatCents(totals.totalCents)}
           </Text>
         </Group>
+      </Stack>
+      <Stack gap="sm" mt="md">
+        {children}
       </Stack>
       <Text size="xs" c="dimmed" mt="sm">
         Preços em dólar (USD).

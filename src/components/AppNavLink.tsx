@@ -8,6 +8,8 @@ export interface AppNavLinkProps {
   // Com end, o link só fica ativo na rota exata (não nas filhas).
   readonly end?: boolean
   readonly onClick?: () => void
+  // State da navegação (ex.: o from que o login usa para voltar).
+  readonly state?: unknown
   // Nome acessível quando o texto visível não basta (ex.: o contador do
   // carrinho). Deve começar pelo texto visível.
   readonly 'aria-label'?: string
@@ -20,6 +22,7 @@ export function AppNavLink({
   children,
   end = false,
   onClick,
+  state,
   'aria-label': ariaLabel,
 }: AppNavLinkProps) {
   return (
@@ -27,6 +30,7 @@ export function AppNavLink({
       to={to}
       end={end}
       onClick={onClick}
+      state={state}
       aria-label={ariaLabel}
       className={classes.link}
     >

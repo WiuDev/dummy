@@ -1,8 +1,16 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useLocation } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@/test/render'
 import { AppNavLink } from './AppNavLink'
+
+function StateDisplay() {
+  const location = useLocation()
+  return (
+    <output aria-label="State atual">{JSON.stringify(location.state)}</output>
+  )
+}
 
 describe('AppNavLink', () => {
   it('marca só o link da rota atual com aria-current="page"', () => {
@@ -59,6 +67,25 @@ describe('AppNavLink', () => {
     expect(screen.getByRole('link', { name: 'Carrinho' })).toHaveAttribute(
       'aria-current',
       'page',
+    )
+  })
+
+  it('leva o state na navegação, quando informado', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <>
+        <AppNavLink to="/login" state={{ from: '/produtos' }}>
+          Entrar
+        </AppNavLink>
+        <StateDisplay />
+      </>,
+      { route: '/produtos' },
+    )
+
+    await user.click(screen.getByRole('link', { name: 'Entrar' }))
+
+    expect(screen.getByLabelText('State atual')).toHaveTextContent(
+      '{"from":"/produtos"}',
     )
   })
 

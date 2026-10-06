@@ -12,7 +12,9 @@ describe('paths', () => {
     expect(paths.home).toBe('/')
   })
 
-  it('tem o caminho do carrinho', () => {
+  it('tem os caminhos do carrinho, do login e da área administrativa', () => {
     expect(paths.cart).toBe('/carrinho')
+    expect(paths.login).toBe('/login')
+    expect(paths.admin).toBe('/admin')
   })
 })

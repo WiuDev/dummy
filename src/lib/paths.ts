@@ -6,4 +6,6 @@ export const paths = {
   productPattern: '/produtos/:id',
   product: (id: number): string => `/produtos/${id}`,
   cart: '/carrinho',
+  login: '/login',
+  admin: '/admin',
 } as const

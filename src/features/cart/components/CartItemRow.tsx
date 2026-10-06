@@ -23,6 +23,8 @@ export interface CartItemRowProps {
   readonly item: CartItem
   readonly onQuantityChange: (productId: number, quantity: number) => void
   readonly onRemove: (productId: number) => void
+  // Durante o envio do pedido, a quantidade e a remoção ficam desabilitadas.
+  readonly disabled?: boolean
 }
 
 // Linha do carrinho: produto, preço unitário, quantidade, total da linha e
@@ -32,6 +34,7 @@ export function CartItemRow({
   item,
   onQuantityChange,
   onRemove,
+  disabled = false,
 }: CartItemRowProps) {
   const [draft, setDraft] = useState<number | string>(item.quantity)
   const [syncedQuantity, setSyncedQuantity] = useState(item.quantity)
@@ -88,6 +91,7 @@ export function CartItemRow({
               allowDecimal={false}
               allowNegative={false}
               w={110}
+              disabled={disabled}
             />
             <Text fw={700}>
               <VisuallyHidden>Total do item: </VisuallyHidden>
@@ -97,6 +101,7 @@ export function CartItemRow({
               variant="subtle"
               color="red"
               leftSection={<IconTrash size={16} aria-hidden />}
+              disabled={disabled}
               aria-label={`Remover ${item.title} do carrinho`}
               onClick={() => {
                 onRemove(item.id)

@@ -1,4 +1,8 @@
 import type { Page, Route } from '@playwright/test'
+import {
+  type CheckoutRequest,
+  checkoutRequestSchema,
+} from '../../src/schemas/cart.ts'
 import type { Product, ProductSummary } from '../../src/schemas/product.ts'
 import { fixtures } from './fixtures.ts'
 
@@ -69,6 +73,88 @@ function requestLabel(route: Route): string {
   return `${route.request().method()} ${route.request().url()}`
 }
 
+function isTestAccount(body: unknown): boolean {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'username' in body &&
+    'password' in body &&
+    body.username === 'emilys' &&
+    body.password === 'emilyspass'
+  )
+}
+
+const roundToCents = (value: number) => Math.round(value * 100) / 100
+
+// Como a API: monta o carrinho com os produtos que conhece (os das fixtures),
+// descarta os outros sem avisar e arredonda para inteiro o valor com desconto
+// de cada linha.
+function cartFromOrder(order: CheckoutRequest) {
+  const products = order.products.flatMap(({ id, quantity }) => {
+    const product = findProduct(id)
+    if (product === undefined) {
+      return []
+    }
+    const total = roundToCents(product.price * quantity)
+    return [
+      {
+        id,
+        title: product.title,
+        price: product.price,
+        quantity,
+        total,
+        discountPercentage: product.discountPercentage,
+        discountedPrice: Math.round(
+          total * (1 - product.discountPercentage / 100),
+        ),
+        thumbnail: product.thumbnail,
+      },
+    ]
+  })
+  return {
+    id: 209,
+    products,
+    total: roundToCents(products.reduce((sum, line) => sum + line.total, 0)),
+    discountedTotal: products.reduce(
+      (sum, line) => sum + line.discountedPrice,
+      0,
+    ),
+    userId: order.userId,
+    totalProducts: products.length,
+    totalQuantity: products.reduce((sum, line) => sum + line.quantity, 0),
+  }
+}
+
+// POST da DummyJSON (D61). O login aceita a conta pública de teste e responde
+// com a fixture, cujo token é sintético e vence em 2100 (D26); as outras
+// credenciais recebem 400. O checkout exige o Bearer desse token.
+function handlePost(route: Route, unhandled: string[]): Promise<void> {
+  const request = route.request()
+  const { pathname } = new URL(request.url())
+  const body: unknown = request.postDataJSON()
+
+  if (pathname === '/auth/login') {
+    return isTestAccount(body)
+      ? fulfillJson(route, fixtures.login)
+      : fulfillJson(route, { message: 'Invalid credentials' }, 400)
+  }
+  if (pathname === '/auth/carts/add') {
+    if (
+      request.headers()['authorization'] !==
+      `Bearer ${fixtures.login.accessToken}`
+    ) {
+      return fulfillJson(route, { message: 'Access Token is required' }, 401)
+    }
+    const order = checkoutRequestSchema.safeParse(body)
+    return order.success
+      ? fulfillJson(route, cartFromOrder(order.data), 201)
+      : fulfillJson(route, { message: 'Invalid cart' }, 400)
+  }
+
+  unhandled.push(requestLabel(route))
+  return fulfillJson(route, { message: `Rota não mockada: ${pathname}` }, 404)
+}
+
 // Responde como a DummyJSON. Rota ou método sem mock entra em unhandled (e
 // responde 404 ou 405), para a fixture falhar o teste.
 function handleApi(route: Route, unhandled: string[]): Promise<void> {
@@ -76,6 +162,9 @@ function handleApi(route: Route, unhandled: string[]): Promise<void> {
   const url = new URL(request.url())
   const { pathname } = url
 
+  if (request.method() === 'POST') {
+    return handlePost(route, unhandled)
+  }
   if (request.method() !== 'GET') {
     unhandled.push(requestLabel(route))
     return fulfillJson(
