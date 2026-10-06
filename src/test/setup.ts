@@ -29,6 +29,9 @@ window.getComputedStyle = (element: Element) =>
 
 window.HTMLElement.prototype.scrollIntoView = () => {}
 
+// O jsdom não implementa a rolagem da janela (e avisaria a cada chamada).
+window.scrollTo = () => {}
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string): MediaQueryList => ({
