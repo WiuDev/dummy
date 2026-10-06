@@ -1,5 +1,7 @@
 import { z } from 'zod'
-import { productSchema } from './product'
+// Com extensão: o mock do E2E também importa este schema, e o tsconfig.node.json
+// usa nodenext, que exige a extensão nos imports relativos.
+import { productSchema } from './product.ts'
 
 // Item do carrinho salvo no navegador: os dados do produto quando ele entrou no
 // carrinho e a quantidade, que nunca passa do estoque.

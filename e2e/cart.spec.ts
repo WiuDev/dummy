@@ -1,7 +1,7 @@
 import { expect, isDeployed, test } from './support/test.ts'
 
 // Produtos 1 e 2 das fixtures: rímel a US$ 8,94 e paleta a US$ 16,35, já com
-// desconto. A Fase 5 estende este fluxo com o checkout.
+// desconto. O segundo teste é o fluxo 2: o checkout, que exige login.
 test.describe('carrinho', () => {
   // Os títulos e preços vêm das fixtures: contra a API real, não valem.
   test.skip(isDeployed, 'depende da API mockada')
@@ -80,5 +80,49 @@ test.describe('carrinho', () => {
       nav.getByRole('link', { name: 'Carrinho, 3 itens' }),
     ).toBeVisible()
     await expect(summary).toContainText('US$ 26,82')
+  })
+
+  test('finaliza a compra com login, confirma o pedido e esvazia o carrinho', async ({
+    page,
+  }) => {
+    const nav = page
+      .getByRole('banner')
+      .getByRole('navigation', { name: 'Navegação principal' })
+    const checkout = page.getByRole('button', { name: 'Finalizar compra' })
+
+    await page.goto('produtos/1')
+    await page.getByRole('button', { name: 'Adicionar ao carrinho' }).click()
+    await nav.getByRole('link', { name: 'Carrinho, 1 item' }).click()
+    await checkout.click()
+
+    await expect(page).toHaveURL(/\/login$/)
+
+    await page.getByRole('textbox', { name: 'Usuário' }).fill('emilys')
+    await page.getByLabel('Senha', { exact: true }).fill('emilyspass')
+    await page.getByRole('button', { name: 'Entrar' }).click()
+
+    await expect(page).toHaveURL(/\/carrinho$/)
+    await expect(
+      nav.getByRole('link', { name: 'Carrinho, 1 item' }),
+    ).toBeVisible()
+
+    await checkout.click()
+
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Pedido confirmado' }),
+    ).toBeVisible()
+    await expect(
+      page.getByText('Pedido nº 209: 1 item, total de US$ 8,94.'),
+    ).toBeVisible()
+    await expect(
+      nav.getByRole('link', { name: 'Carrinho', exact: true }),
+    ).toBeVisible()
+
+    await page.reload()
+
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Seu carrinho está vazio' }),
+    ).toBeVisible()
+    await expect(nav.getByText('Emily')).toBeVisible()
   })
 })
