@@ -29,7 +29,7 @@ Referência persistente para quem trabalha neste repositório, seja pessoa ou ag
 | Qualidade | oxlint · oxlint-tsgolint · prettier                                       | 1.86.0 · 7.0.2003 · 3.9.9                       | instalados                            |
 | UI        | @mantine/core · @mantine/hooks · @mantine/notifications                   | 9.6.3 · 9.6.3 · 9.6.3                           | instalados                            |
 | UI        | @tabler/icons-react                                                       | 3.48.0                                          | instalado                             |
-| UI        | @mantine/form                                                             | 9.6.3                                           | planejado (D23)                       |
+| UI        | @mantine/form                                                             | 9.6.3                                           | instalado                             |
 | Estilos   | postcss · postcss-preset-mantine · postcss-simple-vars                    | 8.5.29 · 1.18.0 · 7.0.1                         | instalados (D35)                      |
 | Rotas     | react-router (modo declarativo)                                           | 7.18.4                                          | instalado                             |
 | Dados     | axios · zod                                                               | 1.20.0 · 4.6.5                                  | instalados                            |
