@@ -70,6 +70,30 @@ describe('AppRoutes', () => {
     ).toBeInTheDocument()
   })
 
+  it('o /admin exige login e, depois de entrar, volta para ele', async () => {
+    const user = userEvent.setup()
+    renderRoute('/admin')
+
+    const main = screen.getByRole('main')
+    expect(
+      within(main).getByRole('heading', { level: 1, name: 'Entrar' }),
+    ).toBeInTheDocument()
+
+    await user.type(
+      within(main).getByRole('textbox', { name: 'Usuário' }),
+      'emilys',
+    )
+    await user.type(within(main).getByLabelText('Senha'), 'emilyspass')
+    await user.click(within(main).getByRole('button', { name: 'Entrar' }))
+
+    expect(
+      await within(main).findByRole('heading', {
+        level: 1,
+        name: 'Área administrativa',
+      }),
+    ).toBeInTheDocument()
+  })
+
   it('mostra a página não encontrada para rotas desconhecidas', async () => {
     const user = userEvent.setup()
     renderRoute('/rota-inexistente')
