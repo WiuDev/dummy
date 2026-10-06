@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test'
+import { expect, test as base } from '@playwright/test'
 import { installMockApi } from './mock-api.ts'
 
 // Com E2E_BASE_URL (smoke pós-deploy), os testes rodam contra o site publicado
@@ -11,13 +11,20 @@ export const isDeployed = process.env.E2E_BASE_URL !== undefined
 export const test = base.extend<{ mockApi: void }>({
   mockApi: [
     async ({ page }, provide) => {
-      if (!isDeployed) {
-        await installMockApi(page)
+      if (isDeployed) {
+        await provide()
+        return
       }
+
+      const unhandled = await installMockApi(page)
       await provide()
+
+      // Como o onUnhandledRequest: 'error' do MSW nos testes unitários: uma
+      // requisição externa sem mock falha o teste.
+      expect(unhandled, 'requisições externas sem mock').toEqual([])
     },
     { auto: true },
   ],
 })
 
-export { expect } from '@playwright/test'
+export { expect }

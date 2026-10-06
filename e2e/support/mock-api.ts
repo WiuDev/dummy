@@ -65,12 +65,19 @@ function fulfillJson(route: Route, body: unknown, status = 200) {
   return route.fulfill({ status, json: body, headers: CORS_HEADERS })
 }
 
-function handleApi(route: Route): Promise<void> {
+function requestLabel(route: Route): string {
+  return `${route.request().method()} ${route.request().url()}`
+}
+
+// Responde como a DummyJSON. Rota ou método sem mock entra em unhandled (e
+// responde 404 ou 405), para a fixture falhar o teste.
+function handleApi(route: Route, unhandled: string[]): Promise<void> {
   const request = route.request()
   const url = new URL(request.url())
   const { pathname } = url
 
   if (request.method() !== 'GET') {
+    unhandled.push(requestLabel(route))
     return fulfillJson(
       route,
       { message: `Método não mockado: ${request.method()}` },
@@ -104,16 +111,22 @@ function handleApi(route: Route): Promise<void> {
       : fulfillJson(route, product)
   }
 
+  unhandled.push(requestLabel(route))
   return fulfillJson(route, { message: `Rota não mockada: ${pathname}` }, 404)
 }
 
 // Instala a API falsa na página: DummyJSON e imagens do CDN respondidas daqui e
 // qualquer outro host externo bloqueado, para o E2E do CI não sair para a rede.
-export async function installMockApi(page: Page): Promise<void> {
+// Devolve a lista, preenchida durante o teste, das requisições externas sem
+// mock.
+export async function installMockApi(page: Page): Promise<readonly string[]> {
+  const unhandled: string[] = []
+
   // A rota registrada por último tem prioridade: o bloqueio geral vem antes.
-  await page.route(/^https?:\/\/(?!localhost[:/])/, (route) =>
-    route.abort('blockedbyclient'),
-  )
+  await page.route(/^https?:\/\/(?!localhost[:/])/, (route) => {
+    unhandled.push(requestLabel(route))
+    return route.abort('blockedbyclient')
+  })
   await page.route('https://cdn.dummyjson.com/**', (route) =>
     route.fulfill({
       body: TRANSPARENT_PIXEL,
@@ -121,5 +134,7 @@ export async function installMockApi(page: Page): Promise<void> {
       headers: CORS_HEADERS,
     }),
   )
-  await page.route(`${API_URL}/**`, handleApi)
+  await page.route(`${API_URL}/**`, (route) => handleApi(route, unhandled))
+
+  return unhandled
 }
