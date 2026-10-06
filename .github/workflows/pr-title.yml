@@ -1,0 +1,33 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+# O job só lê o título do evento: o GITHUB_TOKEN não precisa de permissão.
+permissions: {}
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: pr-title
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Validar o título no padrão Conventional Commits
+        # O título chega por variável de ambiente e nunca é interpolado no
+        # script, o que impede injeção de comandos pelo título do PR.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|refactor|test|docs|style|build|ci|perf|chore)(\([a-z0-9-]+\))?!?: [^ ].*$'
+          printf 'Título recebido: %s\n' "$PR_TITLE"
+          if [[ "$PR_TITLE" =~ $pattern ]]; then
+            echo 'Título no padrão Conventional Commits.'
+          else
+            echo '::error title=Título do PR fora do padrão::Use "<tipo>(<escopo opcional>): <descrição>", com tipo entre feat, fix, refactor, test, docs, style, build, ci, perf e chore.'
+            exit 1
+          fi
