@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { clearAdminOverlay } from '@/lib/admin-overlay'
 import {
   AUTH_SESSION_KEY,
   clearSession,
@@ -42,6 +43,14 @@ const SESSION_ENDED_NOTIFICATION_ID = 'session-ended'
 export function AuthProvider({ children }: AuthProviderProps) {
   const [lookup, setLookup] = useState<SessionLookup>(inspectSession)
   const session = lookup.status === 'active' ? lookup.session : null
+
+  // Sem sessão (Sair, vencimento, 401 ou logout em outra aba), as alterações
+  // simuladas do admin deixam de valer (A4), mesmo com o admin desmontado.
+  useEffect(() => {
+    if (session === null) {
+      clearAdminOverlay()
+    }
+  }, [session])
 
   // A sessão deixou de valer (venceu ou a API a recusou): avisa. O id fixo
   // evita avisos repetidos quando mais de uma camada percebe o fim.

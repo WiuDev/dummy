@@ -8,7 +8,13 @@ import {
   readSession,
   writeSession,
 } from '@/lib/auth-session'
+import {
+  ADMIN_OVERLAY_KEY,
+  EMPTY_ADMIN_OVERLAY,
+  writeAdminOverlay,
+} from '@/lib/admin-overlay'
 import { unauthorizedEvents } from '@/services/http-events'
+import { lampFields } from '@/test/admin'
 import { renderWithProviders } from '@/test/render'
 import {
   activeSession,
@@ -52,6 +58,74 @@ function changeInAnotherTab(change: () => void) {
     window.dispatchEvent(new StorageEvent('storage', { key: AUTH_SESSION_KEY }))
   })
 }
+
+// Um overlay do admin com um produto criado, salvo no sessionStorage.
+function seedAdminOverlay() {
+  writeAdminOverlay({
+    ...EMPTY_ADMIN_OVERLAY,
+    created: [{ ...lampFields, id: 10_000 }],
+    nextLocalId: 10_001,
+  })
+}
+
+const adminOverlaySaved = () =>
+  window.sessionStorage.getItem(ADMIN_OVERLAY_KEY) !== null
+
+describe('overlay do admin (A4)', () => {
+  it('fica enquanto a sessão vale', () => {
+    seedActiveSession()
+    seedAdminOverlay()
+
+    renderAuth()
+
+    expect(adminOverlaySaved()).toBe(true)
+  })
+
+  it('é apagado pelo Sair, mesmo sem o admin montado', () => {
+    seedActiveSession()
+    seedAdminOverlay()
+    const { result } = renderAuth()
+
+    act(() => {
+      result.current.logout()
+    })
+
+    expect(adminOverlaySaved()).toBe(false)
+  })
+
+  it('é apagado quando a API recusa a sessão', () => {
+    seedActiveSession()
+    seedAdminOverlay()
+    renderAuth()
+
+    act(() => {
+      unauthorizedEvents.emit({ reason: 'rejected', url: '/auth/products' })
+    })
+
+    expect(adminOverlaySaved()).toBe(false)
+  })
+
+  it('é apagado quando outra aba sai', () => {
+    seedActiveSession()
+    seedAdminOverlay()
+    renderAuth()
+
+    changeInAnotherTab(() => {
+      clearSession()
+    })
+
+    expect(adminOverlaySaved()).toBe(false)
+  })
+
+  it('não sobrevive a uma sessão salva vencida', () => {
+    seedExpiredSession()
+    seedAdminOverlay()
+
+    renderAuth()
+
+    expect(adminOverlaySaved()).toBe(false)
+  })
+})
 
 describe('AuthProvider', () => {
   it('começa com a sessão salva, já no primeiro render', () => {
