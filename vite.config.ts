@@ -47,6 +47,18 @@ function appVersionMeta(): Plugin {
   }
 }
 
+// Dependências da carga inicial em chunks próprios (D73), em ordem de
+// prioridade: cada módulo fica no primeiro grupo que o captura.
+const VENDOR_CHUNKS = [
+  {
+    name: 'react',
+    test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+  },
+  { name: 'react-router', test: /[\\/]node_modules[\\/]react-router[\\/]/ },
+  { name: 'mantine', test: /[\\/]node_modules[\\/]@mantine[\\/]/ },
+  { name: 'vendor', test: /[\\/]node_modules[\\/]/ },
+]
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '/dummy/',
@@ -54,5 +66,20 @@ export default defineConfig({
   resolve: {
     // Usa o `paths` do tsconfig (alias `@/` → `src/`).
     tsconfigPaths: true,
+  },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: VENDOR_CHUNKS.map((group, index) => ({
+            ...group,
+            // Só o que a carga inicial importa: o que só o admin usa continua
+            // nos chunks dele, carregados sob demanda (D66).
+            tags: ['$initial' as const],
+            priority: VENDOR_CHUNKS.length - index,
+          })),
+        },
+      },
+    },
   },
 })
