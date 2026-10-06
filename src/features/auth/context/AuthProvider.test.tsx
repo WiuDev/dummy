@@ -175,6 +175,19 @@ describe('fim da sessão', () => {
     expect(screen.getByText(SESSION_ENDED)).toBeInTheDocument()
   })
 
+  it('camada 2: ao voltar à aba com a sessão ainda válida, nada muda', () => {
+    renderWithProviders(<SessionStatus />, {
+      session: sessionExpiringIn(60_000),
+    })
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    expect(screen.getByText('Sair da sessão de Emily')).toBeInTheDocument()
+    expect(readSession()).not.toBeNull()
+  })
+
   it('camada 3: a sessão recusada pela API (401) é encerrada e avisada', () => {
     renderWithProviders(<SessionStatus />, { session: activeSession() })
 

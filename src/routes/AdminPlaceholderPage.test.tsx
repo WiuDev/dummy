@@ -17,4 +17,13 @@ describe('AdminPlaceholderPage', () => {
     ).toBeInTheDocument()
     expect(document.title).toBe('Área administrativa · Loja Dummy')
   })
+
+  it('fora do RequireAuth, sem sessão, não cumprimenta ninguém', () => {
+    renderWithProviders(<AdminPlaceholderPage />)
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Área administrativa' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/^Olá/)).toBeNull()
+  })
 })

@@ -5,8 +5,8 @@ import type { CartTotals } from '../context/cart-state'
 
 export interface CartSummaryProps {
   readonly totals: CartTotals
-  // Ações abaixo dos totais (ex.: finalizar a compra).
-  readonly children?: ReactNode
+  // Ações abaixo dos totais (o "Finalizar compra" e o aviso de falha).
+  readonly children: ReactNode
 }
 
 const SUMMARY_TITLE_ID = 'resumo-do-carrinho'
@@ -50,11 +50,9 @@ export function CartSummary({ totals, children }: CartSummaryProps) {
           </Text>
         </Group>
       </Stack>
-      {children === undefined ? null : (
-        <Stack gap="sm" mt="md">
-          {children}
-        </Stack>
-      )}
+      <Stack gap="sm" mt="md">
+        {children}
+      </Stack>
       <Text size="xs" c="dimmed" mt="sm">
         Preços em dólar (USD).
       </Text>
