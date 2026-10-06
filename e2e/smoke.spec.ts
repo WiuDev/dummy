@@ -4,11 +4,19 @@ import { expect, test } from '@playwright/test'
 // GitHub Pages quem responde é o 404.html (status 404), que também carrega a SPA.
 const isDeployed = process.env.E2E_BASE_URL !== undefined
 
+// O build grava GITHUB_SHA (ou "local") na meta app-version. No CI e no smoke
+// pós-deploy, o build e os testes rodam no mesmo workflow, com o mesmo SHA.
+const expectedVersion = process.env.GITHUB_SHA ?? 'local'
+
 test.describe('smoke', { tag: '@smoke' }, () => {
   test('a home carrega a página em construção', async ({ page }) => {
     await page.goto('./')
 
     await expect(page).toHaveTitle('Loja Dummy')
+    await expect(page.locator('meta[name="app-version"]')).toHaveAttribute(
+      'content',
+      expectedVersion,
+    )
     await expect(
       page.getByRole('heading', { level: 1, name: 'Em construção' }),
     ).toBeVisible()

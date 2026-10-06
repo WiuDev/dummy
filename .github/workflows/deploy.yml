@@ -77,7 +77,7 @@ jobs:
     name: smoke
     needs: deploy
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       E2E_BASE_URL: https://wiudev.github.io/dummy/
     steps:
@@ -98,16 +98,19 @@ jobs:
       - name: Instalar o Chromium do Playwright
         run: yarn playwright install --with-deps --only-shell chromium
 
-      - name: Aguardar o site responder
+      # O Pages entrega o HTML com Cache-Control: max-age=600 e a query string
+      # não fura o cache da CDN; por isso o passo espera até 15 minutos pela
+      # meta app-version com o SHA deste workflow.
+      - name: Aguardar a versão publicada
         run: |
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error --output /dev/null "$E2E_BASE_URL"; then
-              echo "Site no ar (tentativa $attempt)."
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error "$E2E_BASE_URL" | grep -qF "content=\"$GITHUB_SHA\""; then
+              echo "Versão $GITHUB_SHA no ar (tentativa $attempt)."
               exit 0
             fi
-            sleep 10
+            sleep 15
           done
-          echo "O site não respondeu em 5 minutos." >&2
+          echo "A versão $GITHUB_SHA não apareceu em 15 minutos." >&2
           exit 1
 
       - name: Smoke em produção
