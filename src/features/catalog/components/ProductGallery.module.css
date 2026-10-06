@@ -1,0 +1,26 @@
+.main {
+  height: rem(280px);
+  background-color: light-dark(
+    var(--mantine-color-gray-0),
+    var(--mantine-color-dark-6)
+  );
+
+  @mixin larger-than $mantine-breakpoint-sm {
+    height: rem(380px);
+  }
+}
+
+.thumb {
+  overflow: hidden;
+  border: rem(2px) solid transparent;
+  border-radius: var(--mantine-radius-md);
+
+  &[aria-pressed='true'] {
+    border-color: var(--mantine-primary-color-filled);
+  }
+
+  &:focus-visible {
+    outline: rem(2px) solid var(--mantine-primary-color-filled);
+    outline-offset: rem(2px);
+  }
+}
